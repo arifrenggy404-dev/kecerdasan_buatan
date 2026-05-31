@@ -2,50 +2,62 @@
 
 # Sistem Penjadwalan Universitas (Algoritma Genetika)
 
-Aplikasi berbasis Laravel untuk menghasilkan jadwal perkuliahan otomatis tanpa bentrok menggunakan optimasi Algoritma Genetika.
+Aplikasi berbasis Laravel untuk menghasilkan jadwal perkuliahan otomatis tanpa bentrok menggunakan optimasi Algoritma Genetika. Sistem ini dirancang untuk menangani kompleksitas penjadwalan akademik dengan mempertimbangkan keterbatasan dosen, ruangan, dan waktu secara dinamis.
 
 ---
 
 ## 🚀 Cara Kerja Sistem (Algoritma Genetika)
 
-Sistem penjadwalan ini bekerja menggunakan Algoritma Genetika (AG), yaitu teknik optimasi yang meniru proses evolusi alam (seleksi alam Darwin) untuk menemukan solusi terbaik dari jutaan kemungkinan kombinasi jadwal.
+Sistem penjadwalan ini menggunakan Algoritma Genetika (AG), sebuah metode metaheuristik yang meniru proses evolusi biologi untuk memecahkan masalah optimasi kombinatorial yang kompleks.
 
-Berikut adalah penjelasan detail cara kerjanya, dari persiapan data hingga menghasilkan jadwal yang sempurna:
+Berikut adalah penjelasan teknis detail mengenai tahapan algoritmanya:
 
 ### 1. Representasi Data (Kromosom & Gen)
-Dalam algoritma ini, jadwal diibaratkan sebagai makhluk hidup:
-*   **Gen:** Adalah satu unit jadwal untuk satu mata kuliah. Isinya meliputi: ID Mata Kuliah, ID Dosen, ID Hari, ID Jam, dan ID Ruangan.
-*   **Kromosom:** Adalah kumpulan dari seluruh "Gen" (seluruh jadwal mata kuliah dalam satu semester). Satu kromosom mewakili satu solusi jadwal lengkap.
+*   **Gen:** Mewakili satu unit jadwal untuk satu `CourseOffering` (Mata Kuliah). Data gen meliputi:
+    *   `offering_id`: ID Mata Kuliah yang ditawarkan.
+    *   `lecturer_id`: Dosen pengampu.
+    *   `room_idx`: Indeks ruangan yang dipilih.
+    *   `day_idx`: Indeks hari yang dipilih.
+    *   `slot_idx`: Indeks jam mulai (berdasarkan ketersediaan slot SKS).
+*   **Kromosom:** Kumpulan dari seluruh Gen yang membentuk satu solusi jadwal lengkap untuk satu periode/semester.
 
-### 2. Tahap Inisialisasi (Populasi Awal)
-Sistem tidak hanya membuat satu jadwal, melainkan 60 jadwal (Populasi) sekaligus secara acak di awal.
-*   **Smart Initialization:** Agar proses lebih cepat, sejak awal sistem sudah diarahkan untuk memilih ruangan yang tipenya cocok (misal: Mata kuliah praktikum hanya akan mengambil ruangan tipe "Lab").
+### 2. Konfigurasi Dinamis (Environment)
+Sebelum algoritma berjalan, sistem menyiapkan lingkungan berdasarkan data dari tabel `settings`:
+*   **Active Days:** Hari-hari aktif perkuliahan (misal: Senin-Jumat).
+*   **Operational Hours:** Jam mulai dan berakhir operasional kampus.
+*   **Blackout Hours:** Waktu jeda di mana tidak boleh ada perkuliahan (misal: jam istirahat).
+*   **SKS Duration:** Durasi satu SKS dalam menit (misal: 50 menit). Sistem secara otomatis menghasilkan `TimeSlot` yang sesuai dengan durasi ini.
 
-### 3. Tahap Evaluasi (Fungsi Fitness)
-Inilah "otak" dari sistem. Setiap jadwal yang dibuat akan dinilai kualitasnya menggunakan rumus Fitness. Semakin sedikit bentrok, semakin tinggi nilai fitness-nya.
-Sistem memberikan Hukuman (Penalti) jika terjadi pelanggaran:
-*   **Bentrok Dosen (5000 poin):** Jika seorang dosen mengajar di dua tempat berbeda pada jam yang sama.
-*   **Bentrok Ruangan (5000 poin):** Jika dua mata kuliah menempati satu ruangan pada jam yang sama.
-*   **Tipe Ruangan Tidak Cocok (10000 poin):** Jika kuliah teori dilakukan di Lab, atau sebaliknya.
-*   **Melebihi Jam Operasional (10000 poin):** Jika durasi kuliah (SKS) melampaui batas jam pulang kampus.
+### 3. Inisialisasi Populasi
+*   **Ukuran Populasi:** 100 individu (kromosom) per generasi.
+*   **Smart Initialization:** Saat pembentukan populasi awal, sistem secara otomatis hanya memilih ruangan yang tipenya cocok dengan tipe mata kuliah (Teori vs Praktikum/Lab) untuk mempercepat konvergensi.
 
-**Rumus Fitness:** `Fitness = 1 / (1 + Total Penalti)`
-*   Jika Fitness = 1.0, berarti Nol Bentrok (Jadwal Sempurna).
+### 4. Evaluasi (Fungsi Fitness)
+Setiap individu dinilai kualitasnya berdasarkan kepatuhan terhadap batasan (*constraints*). Sistem menggunakan **Hard Constraints** dengan penalti berat (1.000.000 poin) untuk setiap pelanggaran:
+1.  **Bentrok Dosen:** Seorang dosen tidak boleh mengajar di dua kelas berbeda pada waktu yang sama.
+2.  **Bentrok Ruangan:** Satu ruangan tidak boleh digunakan oleh dua kelas berbeda pada waktu yang sama.
+3.  **Kesesuaian Tipe Ruangan:** Mata kuliah praktikum harus di Laboratorium, dan teori di ruang kelas biasa.
+4.  **Slot Overflow:** Durasi mata kuliah (SKS) tidak boleh melebihi batas jam operasional harian.
 
-### 4. Tahap Evolusi (Perbaikan Jadwal)
-Jika jadwal belum sempurna (Fitness < 1.0), sistem akan melakukan proses evolusi untuk menciptakan generasi baru yang lebih baik:
+**Rumus Fitness:**  
+`Fitness = 1 / (1 + Total Penalti)`  
+*   Nilai **1.0** menunjukkan jadwal yang sempurna (nol bentrok).
 
-1.  **Seleksi (Tournament Selection):** Sistem mengambil beberapa jadwal secara acak, lalu memilih yang terbaik (fitness tertinggi) untuk dijadikan "orang tua".
-2.  **Pindah Silang (Crossover):** Dua jadwal "orang tua" yang bagus digabungkan gen-nya (sebagian jadwal diambil dari Orang Tua A, sebagian dari B) untuk menciptakan jadwal "anak" yang diharapkan mewarisi kebaikan kedua induknya.
-3.  **Mutasi (Mutation):** Untuk mencegah algoritma "stagnan", sistem akan mengubah sedikit data secara acak (misalnya memindahkan satu mata kuliah ke hari lain atau ruangan lain). Ini seperti mencoba kemungkinan baru secara spontan.
-4.  **Elitisme:** Sistem akan selalu menjaga 10% jadwal terbaik dari generasi sebelumnya agar tidak hilang atau rusak selama proses evolusi.
+### 5. Proses Evolusi
+Sistem melakukan iterasi hingga maksimal **5000 generasi** untuk mencari solusi optimal:
 
-### 5. Konvergensi (Hasil Akhir)
-Proses (Evaluasi -> Seleksi -> Crossover -> Mutasi) ini diulang-ulang secara terus-menerus hingga:
-*   Ditemukan jadwal dengan Fitness 1.0 (Tidak ada satu pun bentrok).
-*   Atau mencapai batas maksimal generasi (1000 generasi).
+*   **Elitisme (10%):** 10 individu terbaik dari generasi sekarang langsung dibawa ke generasi berikutnya tanpa perubahan untuk menjaga kualitas genetik.
+*   **Seleksi (Tournament Selection):** Menggunakan ukuran turnamen 5 untuk memilih orang tua dengan fitness terbaik.
+*   **Crossover (Single Point):** Menggabungkan gen dari dua orang tua pada titik acak untuk menciptakan keturunan baru.
+*   **Mutasi Adaptif:** 
+    *   **Normal:** Peluang mutasi gen sebesar 5%.
+    *   **Adaptive Mutation:** Jika setelah 500 generasi tidak ditemukan solusi sempurna, laju mutasi ditingkatkan menjadi 20% untuk keluar dari optimum lokal.
+    *   **Swap Mutation:** Terdapat peluang 5% di setiap langkah mutasi untuk menukar seluruh blok hari, waktu, dan ruangan antar dua mata kuliah secara acak.
+
+### 6. Konvergensi & Output
+Algoritma berhenti jika ditemukan individu dengan **Fitness = 1.0**. Jadwal tersebut kemudian dipetakan kembali ke database dan siap ditampilkan kepada pengguna.
 
 ---
 
-### 💡 Mengapa Sistem Ini "Cerdas"?
-Sistem ini cerdas karena ia tidak mencoba semua kemungkinan secara buta (yang bisa memakan waktu bertahun-tahun), melainkan ia "belajar" dari kesalahan. Setiap kali ada bentrok, nilai fitness turun, dan jadwal tersebut dibuang atau diperbaiki melalui mutasi sampai ditemukan kombinasi yang benar-benar pas antara ketersediaan Dosen, Ruangan, dan Waktu.
+### 💡 Mengapa Menggunakan Algoritma Genetika?
+Masalah penjadwalan adalah masalah *NP-Hard* di mana mencoba semua kombinasi secara manual sangatlah mustahil. Algoritma Genetika mampu melakukan pencarian ruang solusi secara paralel dan efisien, memastikan ketersediaan sumber daya kampus (dosen dan ruangan) digunakan secara optimal tanpa adanya konflik jadwal.
