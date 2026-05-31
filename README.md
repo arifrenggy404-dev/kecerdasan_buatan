@@ -28,10 +28,11 @@ Sebelum algoritma berjalan, sistem menyiapkan lingkungan berdasarkan data dari t
 *   **Active Days:** Hari-hari aktif perkuliahan (misal: Senin-Jumat).
 *   **Operational Hours:** Jam mulai dan berakhir operasional kampus.
 *   **Blackout Hours (Specific Days):** Waktu jeda atau kegiatan khusus (misal: ibadah atau rapat rutin) di mana tidak boleh ada perkuliahan pada hari tertentu atau setiap hari.
-*   **SKS Duration:** Durasi satu SKS dalam menit (misal: 50 menit). Sistem secara otomatis menghasilkan `TimeSlot` yang sesuai dengan durasi ini.
+*   **SKS Duration & Zero Gap:** Durasi satu SKS dalam menit (misal: 50 menit). Sistem menggunakan perhitungan waktu kontinu (3 SKS = 150 menit) tanpa jeda antar slot untuk akurasi jam selesai.
 
 ### 3. Inisialisasi Populasi
 *   **Ukuran Populasi:** 100 individu (kromosom) per generasi.
+*   **TimeSlot Refresh:** Setiap kali proses generate dimulai, sistem menghapus dan membuat ulang seluruh `TimeSlot` di database untuk mencegah "Slot Hantu" dari pengaturan lama yang bisa mengacaukan perhitungan waktu.
 *   **Smart Initialization:** Saat pembentukan populasi awal, sistem secara otomatis hanya memilih ruangan yang tipenya cocok dengan tipe mata kuliah (Teori vs Praktikum/Lab). Selain itu, sistem secara proaktif menghindari slot waktu *blackout* sejak awal pembentukan individu untuk mempercepat konvergensi.
 
 ### 4. Evaluasi (Fungsi Fitness)
@@ -39,15 +40,14 @@ Setiap individu dinilai kualitasnya berdasarkan kepatuhan terhadap batasan (*con
 1.  **Bentrok Dosen:** Seorang dosen tidak boleh mengajar di dua kelas berbeda pada waktu yang sama.
 2.  **Bentrok Ruangan:** Satu ruangan tidak boleh digunakan oleh dua kelas berbeda pada waktu yang sama.
 3.  **Kesesuaian Tipe Ruangan:** Mata kuliah praktikum harus di Laboratorium, dan teori di ruang kelas biasa.
-4.  **Pelanggaran Waktu Blackout:** Jadwal tidak boleh menempati rentang waktu terlarang (Blackout) yang telah ditentukan untuk hari tertentu.
+4.  **Pelanggaran Waktu Blackout:** Jadwal tidak boleh menempati rentang waktu terlarang (Blackout) secara keseluruhan maupun sebagian durasi kelas.
 5.  **Slot Overflow:** Durasi mata kuliah (SKS) tidak boleh melebihi batas jam operasional harian.
 
 **Rumus Fitness:**  
 `Fitness = 1 / (1 + Total Penalti)`  
-*   Nilai **1.0** menunjukkan jadwal yang sempurna (nol bentrok).
 
 ### 5. Proses Evolusi
-Sistem melakukan iterasi hingga maksimal **5000 generasi** untuk mencari solusi optimal:
+Sistem melakukan iterasi hingga maksimal **3000 generasi** untuk mencari solusi optimal:
 
 *   **Elitisme (10%):** 10 individu terbaik dari generasi sekarang langsung dibawa ke generasi berikutnya tanpa perubahan untuk menjaga kualitas genetik.
 *   **Seleksi (Tournament Selection):** Menggunakan ukuran turnamen 5 untuk memilih orang tua dengan fitness terbaik.
@@ -57,8 +57,8 @@ Sistem melakukan iterasi hingga maksimal **5000 generasi** untuk mencari solusi 
     *   **Adaptive Mutation:** Jika setelah 500 generasi tidak ditemukan solusi sempurna, laju mutasi ditingkatkan menjadi 20% untuk keluar dari optimum lokal.
     *   **Swap Mutation:** Terdapat peluang 5% di setiap langkah mutasi untuk menukar seluruh blok hari, waktu, dan ruangan antar dua mata kuliah secara acak.
 
-### 6. Konvergensi & Output
-Algoritma berhenti jika ditemukan individu dengan **Fitness = 1.0**. Jadwal tersebut kemudian dipetakan kembali ke database dan siap ditampilkan kepada pengguna.
+### 6. Konvergensi & Output (Zero Tolerance)
+Sistem menerapkan kebijakan **Zero Tolerance**. Algoritma hanya akan menyimpan hasil ke database jika ditemukan individu dengan **Fitness = 1.0 (Nol Bentrok)**. Jika hingga generasi maksimal solusi sempurna belum ditemukan, sistem tidak akan menyimpan jadwal apa pun untuk menjamin integritas data.
 
 ---
 
