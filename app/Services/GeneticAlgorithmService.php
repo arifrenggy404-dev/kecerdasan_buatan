@@ -103,6 +103,9 @@ class GeneticAlgorithmService
 
     protected function ensureTimeSlotsExist($start, $end, $durationMinutes)
     {
+        // Bersihkan seluruh slot lama untuk mencegah "Slot Hantu" antar run
+        TimeSlot::query()->delete();
+
         $startTime = strtotime($start);
         $endTimeLimit = strtotime($end);
         
@@ -185,7 +188,6 @@ class GeneticAlgorithmService
     {
         $penalty = 0;
         $count = count($chromosome);
-        $hasHardViolation = false;
 
         // Pre-calculate data gen dalam bentuk integer menit
         $genesWithMinutes = [];
@@ -195,7 +197,6 @@ class GeneticAlgorithmService
             
             if ($endSlotIdx >= count($this->timeSlots)) {
                 $penalty += 1000000;
-                $hasHardViolation = true;
                 $genesWithMinutes[] = null;
                 continue;
             }
@@ -203,7 +204,6 @@ class GeneticAlgorithmService
             // Check for blackout
             if ($this->isBlackout($this->days[$gene['day_idx']]['id'], $gene['slot_idx'], $gene['sks'])) {
                 $penalty += 1000000;
-                $hasHardViolation = true;
             }
 
             $endSlotMin = $this->slotMinutes[$endSlotIdx];
@@ -225,7 +225,6 @@ class GeneticAlgorithmService
 
             if ($g1['type'] !== $g1['room_type']) {
                 $penalty += 1000000;
-                $hasHardViolation = true;
             }
 
             for ($j = $i + 1; $j < $count; $j++) {
@@ -238,19 +237,15 @@ class GeneticAlgorithmService
                     if ($isOverlapping) {
                         if ($g1['lecturer_id'] === $g2['lecturer_id']) {
                             $penalty += 1000000;
-                            $hasHardViolation = true;
                         }
 
                         if ($g1['room_id'] === $g2['room_id']) {
                             $penalty += 1000000;
-                            $hasHardViolation = true;
                         }
                     }
                 }
             }
         }
-
-        if ($hasHardViolation) return 0.0;
 
         return ($penalty === 0) ? 1.0 : (1 / (1 + $penalty));
     }
