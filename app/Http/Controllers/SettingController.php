@@ -61,14 +61,22 @@ class SettingController extends Controller
             'end' => $request->operational_end,
         ]);
 
-        $blackout = [];
-        if ($request->blackout_start && $request->blackout_end) {
-            $blackout[] = [
-                'start' => $request->blackout_start,
-                'end' => $request->blackout_end,
-            ];
+        $blackouts = [];
+        if ($request->has('blackout_starts')) {
+            foreach ($request->blackout_starts as $index => $start) {
+                $end = $request->blackout_ends[$index] ?? null;
+                $dayId = $request->blackout_days[$index] ?? 0;
+
+                if ($start && $end) {
+                    $blackouts[] = [
+                        'day_id' => (int) $dayId,
+                        'start'  => $start,
+                        'end'    => $end,
+                    ];
+                }
+            }
         }
-        Setting::setValue('blackout_hours', $blackout);
+        Setting::setValue('blackout_hours', $blackouts);
 
         return redirect()->back()->with('success', 'Pengaturan batasan waktu berhasil diperbarui.');
     }

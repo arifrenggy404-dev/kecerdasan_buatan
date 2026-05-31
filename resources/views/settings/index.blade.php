@@ -69,19 +69,63 @@
                             <div class="mb-5">
                                 <label class="form-label fw-bold text-dark d-block mb-3">
                                     <span class="bg-primary-subtle text-primary rounded-circle me-2 d-inline-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.8rem;">3</span>
-                                    Waktu Istirahat (Blackout)
+                                    Waktu Istirahat / Khusus (Blackout)
                                 </label>
-                                <p class="small text-muted mb-3">Algoritma tidak akan menempatkan jadwal pada rentang ini.</p>
-                                <div class="row g-3">
-                                    <div class="col-6">
-                                        <label class="small text-muted mb-1">Istirahat Mulai</label>
-                                        <input type="time" name="blackout_start" class="form-control bg-light border-0 py-2 rounded-3" value="{{ $blackoutHours[0]['start'] ?? '' }}">
+                                <p class="small text-muted mb-3">Jadwal tidak akan ditempatkan pada hari dan jam berikut.</p>
+                                
+                                <div id="blackout-container">
+                                    @forelse($blackoutHours as $index => $b)
+                                    <div class="blackout-item bg-light p-3 rounded-4 mb-3 position-relative">
+                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-blackout" style="font-size: 0.7rem;"></button>
+                                        <div class="row g-2">
+                                            <div class="col-12 mb-2">
+                                                <label class="small text-muted mb-1">Hari</label>
+                                                <select name="blackout_days[]" class="form-select border-0 bg-white small">
+                                                    <option value="0" {{ ($b['day_id'] ?? 0) == 0 ? 'selected' : '' }}>Semua Hari</option>
+                                                    @foreach($allDays as $id => $name)
+                                                    <option value="{{ $id }}" {{ ($b['day_id'] ?? 0) == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="small text-muted mb-1">Mulai</label>
+                                                <input type="time" name="blackout_starts[]" class="form-control border-0 bg-white small" value="{{ $b['start'] ?? '' }}">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="small text-muted mb-1">Selesai</label>
+                                                <input type="time" name="blackout_ends[]" class="form-control border-0 bg-white small" value="{{ $b['end'] ?? '' }}">
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-6">
-                                        <label class="small text-muted mb-1">Istirahat Selesai</label>
-                                        <input type="time" name="blackout_end" class="form-control bg-light border-0 py-2 rounded-3" value="{{ $blackoutHours[0]['end'] ?? '' }}">
+                                    @empty
+                                    <div class="blackout-item bg-light p-3 rounded-4 mb-3 position-relative">
+                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-blackout" style="font-size: 0.7rem;"></button>
+                                        <div class="row g-2">
+                                            <div class="col-12 mb-2">
+                                                <label class="small text-muted mb-1">Hari</label>
+                                                <select name="blackout_days[]" class="form-select border-0 bg-white small">
+                                                    <option value="0">Semua Hari</option>
+                                                    @foreach($allDays as $id => $name)
+                                                    <option value="{{ $id }}">{{ $name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="small text-muted mb-1">Mulai</label>
+                                                <input type="time" name="blackout_starts[]" class="form-control border-0 bg-white small">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="small text-muted mb-1">Selesai</label>
+                                                <input type="time" name="blackout_ends[]" class="form-control border-0 bg-white small">
+                                            </div>
+                                        </div>
                                     </div>
+                                    @endforelse
                                 </div>
+                                
+                                <button type="button" id="add-blackout" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    <i class="bi bi-plus-circle me-1"></i> Tambah Waktu Blackout
+                                </button>
                             </div>
 
                             <div class="mb-0">
@@ -102,7 +146,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 pt-4 border-top">
+                    <div class="mt-5 pt-4 border-top text-end">
                         <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">Simpan Perubahan</button>
                     </div>
                 </form>
@@ -119,6 +163,50 @@
     </div>
 </div>
 
+<template id="blackout-template">
+    <div class="blackout-item bg-light p-3 rounded-4 mb-3 position-relative">
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-blackout" style="font-size: 0.7rem;"></button>
+        <div class="row g-2">
+            <div class="col-12 mb-2">
+                <label class="small text-muted mb-1">Hari</label>
+                <select name="blackout_days[]" class="form-select border-0 bg-white small">
+                    <option value="0">Semua Hari</option>
+                    @foreach($allDays as $id => $name)
+                    <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6">
+                <label class="small text-muted mb-1">Mulai</label>
+                <input type="time" name="blackout_starts[]" class="form-control border-0 bg-white small">
+            </div>
+            <div class="col-6">
+                <label class="small text-muted mb-1">Selesai</label>
+                <input type="time" name="blackout_ends[]" class="form-control border-0 bg-white small">
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('blackout-container');
+    const template = document.getElementById('blackout-template');
+    const addButton = document.getElementById('add-blackout');
+
+    addButton.addEventListener('click', function() {
+        const clone = template.content.cloneNode(true);
+        container.appendChild(clone);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-blackout')) {
+            e.target.closest('.blackout-item').remove();
+        }
+    });
+});
+</script>
+
 <style>
     .transition-all { transition: all 0.2s ease; }
     .hover-translate-y:hover { transform: translateY(-2px); }
@@ -126,5 +214,6 @@
         background-color: #0d6efd;
         border-color: #0d6efd;
     }
+    .blackout-item { border-left: 4px solid #0d6efd; }
 </style>
 @endsection

@@ -27,19 +27,20 @@ Berikut adalah penjelasan teknis detail mengenai tahapan algoritmanya:
 Sebelum algoritma berjalan, sistem menyiapkan lingkungan berdasarkan data dari tabel `settings`:
 *   **Active Days:** Hari-hari aktif perkuliahan (misal: Senin-Jumat).
 *   **Operational Hours:** Jam mulai dan berakhir operasional kampus.
-*   **Blackout Hours:** Waktu jeda di mana tidak boleh ada perkuliahan (misal: jam istirahat).
+*   **Blackout Hours (Specific Days):** Waktu jeda atau kegiatan khusus (misal: ibadah atau rapat rutin) di mana tidak boleh ada perkuliahan pada hari tertentu atau setiap hari.
 *   **SKS Duration:** Durasi satu SKS dalam menit (misal: 50 menit). Sistem secara otomatis menghasilkan `TimeSlot` yang sesuai dengan durasi ini.
 
 ### 3. Inisialisasi Populasi
 *   **Ukuran Populasi:** 100 individu (kromosom) per generasi.
-*   **Smart Initialization:** Saat pembentukan populasi awal, sistem secara otomatis hanya memilih ruangan yang tipenya cocok dengan tipe mata kuliah (Teori vs Praktikum/Lab) untuk mempercepat konvergensi.
+*   **Smart Initialization:** Saat pembentukan populasi awal, sistem secara otomatis hanya memilih ruangan yang tipenya cocok dengan tipe mata kuliah (Teori vs Praktikum/Lab). Selain itu, sistem secara proaktif menghindari slot waktu *blackout* sejak awal pembentukan individu untuk mempercepat konvergensi.
 
 ### 4. Evaluasi (Fungsi Fitness)
 Setiap individu dinilai kualitasnya berdasarkan kepatuhan terhadap batasan (*constraints*). Sistem menggunakan **Hard Constraints** dengan penalti berat (1.000.000 poin) untuk setiap pelanggaran:
 1.  **Bentrok Dosen:** Seorang dosen tidak boleh mengajar di dua kelas berbeda pada waktu yang sama.
 2.  **Bentrok Ruangan:** Satu ruangan tidak boleh digunakan oleh dua kelas berbeda pada waktu yang sama.
 3.  **Kesesuaian Tipe Ruangan:** Mata kuliah praktikum harus di Laboratorium, dan teori di ruang kelas biasa.
-4.  **Slot Overflow:** Durasi mata kuliah (SKS) tidak boleh melebihi batas jam operasional harian.
+4.  **Pelanggaran Waktu Blackout:** Jadwal tidak boleh menempati rentang waktu terlarang (Blackout) yang telah ditentukan untuk hari tertentu.
+5.  **Slot Overflow:** Durasi mata kuliah (SKS) tidak boleh melebihi batas jam operasional harian.
 
 **Rumus Fitness:**  
 `Fitness = 1 / (1 + Total Penalti)`  

@@ -13,48 +13,50 @@ class GeneticAlgorithmService
     protected array $offerings;
     protected array $rooms;
     protected array $days;       // Filtered Days
-    protected array $timeSlots;  // Filtered TimeSlots
+    protected array $timeSlots;  // All possible TimeSlots within operational hours
     protected array $slotMinutes; // Pre-calculated minutes [idx => ['start' => min, 'end' => min]]
+    protected array $blackouts;   // Day-specific blackouts
     protected int $populationSize = 100;
-    protected float $mutationRate = 0.05; // Kurangi mutasi agar lebih stabil
+    protected float $mutationRate = 0.05;
     protected int $maxGenerations = 5000;
+
+    protected array $blackoutMinutes; // Pre-calculated blackout minutes
 
     public function __construct()
     {
         $this->offerings = CourseOffering::select('id', 'lecturer_id', 'sks', 'type')->get()->toArray();
         $this->rooms = Room::select('id', 'name', 'type')->get()->toArray();
         
-        // 1. Ambil batasan dari Setting
         $activeDayIds = Setting::getValue('active_days', [1, 2, 3, 4, 5]);
         $this->days = Day::whereIn('id', $activeDayIds)->orderBy('id')->get()->toArray();
         
         $operational = Setting::getValue('operational_hours', ['start' => '07:00', 'end' => '22:00']);
-        $blackouts = Setting::getValue('blackout_hours', []);
+        $this->blackouts = Setting::getValue('blackout_hours', []);
         $sksDuration = Setting::getValue('sks_duration', 50);
 
-        // 2. Pastikan tabel time_slots mencukupi rentang operasional dengan durasi SKS yang baru
+        // Pre-calculate blackout minutes
+        $this->blackoutMinutes = [];
+        foreach ($this->blackouts as $b) {
+            $this->blackoutMinutes[] = [
+                'day_id' => $b['day_id'],
+                'start'  => $this->timeToMinutes($b['start']),
+                'end'    => $this->timeToMinutes($b['end']),
+            ];
+        }
+
         $this->ensureTimeSlotsExist($operational['start'], $operational['end'], $sksDuration);
 
-        // 3. Ambil dan filter slot waktu (Hanya yang durasinya pas dengan sks_duration saat ini)
         $this->timeSlots = TimeSlot::orderBy('start_time')
             ->whereTime('start_time', '>=', $operational['start'])
             ->whereTime('end_time', '<=', $operational['end'])
             ->get()
-            ->filter(function($slot) use ($blackouts, $sksDuration) {
+            ->filter(function($slot) use ($sksDuration) {
                 $duration = (strtotime($slot->end_time) - strtotime($slot->start_time)) / 60;
-                if ($duration != $sksDuration) return false;
-
-                foreach ($blackouts as $b) {
-                    if ($slot->start_time >= $b['start'] && $slot->start_time < $b['end']) {
-                        return false;
-                    }
-                }
-                return true;
+                return $duration == $sksDuration;
             })
             ->values()
             ->toArray();
 
-        // Pre-calculate minutes for performance
         $this->slotMinutes = [];
         foreach ($this->timeSlots as $idx => $slot) {
             $this->slotMinutes[$idx] = [
@@ -62,6 +64,27 @@ class GeneticAlgorithmService
                 'end'   => $this->timeToMinutes($slot['end_time'])
             ];
         }
+    }
+
+    protected function isBlackout($dayId, $slotIdx, $sks): bool
+    {
+        $endSlotIdx = $slotIdx + $sks - 1;
+        if (!isset($this->slotMinutes[$slotIdx]) || !isset($this->slotMinutes[$endSlotIdx])) {
+            return true;
+        }
+
+        $classStart = $this->slotMinutes[$slotIdx]['start'];
+        $classEnd = $this->slotMinutes[$endSlotIdx]['end'];
+
+        foreach ($this->blackoutMinutes as $b) {
+            if ($b['day_id'] != 0 && $b['day_id'] != $dayId) continue;
+
+            // Overlap check: (StartA < EndB) and (EndA > StartB)
+            if ($classStart < $b['end'] && $classEnd > $b['start']) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -132,13 +155,26 @@ class GeneticAlgorithmService
             $compatibleRoomIndices = $roomsByType[$offering['type']] ?? array_keys($this->rooms);
             $roomIdx = $compatibleRoomIndices[array_rand($compatibleRoomIndices)];
 
+            // Try to find a non-blackout slot
+            $dayIdx = array_rand($this->days);
+            $slotIdx = rand(0, $maxSlotIdx);
+            
+            // Retry up to 10 times to find a non-blackout slot
+            for ($retry = 0; $retry < 10; $retry++) {
+                if (!$this->isBlackout($this->days[$dayIdx]['id'], $slotIdx, $sks)) {
+                    break;
+                }
+                $dayIdx = array_rand($this->days);
+                $slotIdx = rand(0, $maxSlotIdx);
+            }
+
             $chromosome[] = [
                 'offering_id' => $offering['id'],
                 'lecturer_id' => $offering['lecturer_id'],
                 'offering_type' => $offering['type'],
                 'room_idx'    => $roomIdx,
-                'day_idx'     => array_rand($this->days), 
-                'slot_idx'    => rand(0, $maxSlotIdx),    
+                'day_idx'     => $dayIdx, 
+                'slot_idx'    => $slotIdx,    
                 'sks'         => $sks,
             ];
         }
@@ -160,6 +196,11 @@ class GeneticAlgorithmService
                 $penalty += 1000000;
                 $genesWithMinutes[] = null;
                 continue;
+            }
+
+            // Check for blackout
+            if ($this->isBlackout($this->days[$gene['day_idx']]['id'], $gene['slot_idx'], $gene['sks'])) {
+                $penalty += 1000000;
             }
 
             $endSlotMin = $this->slotMinutes[$endSlotIdx];
@@ -306,11 +347,22 @@ class GeneticAlgorithmService
 
         foreach ($chromosome as &$gene) {
             if ((mt_rand() / mt_getrandmax()) < $rate) {
-                $gene['day_idx'] = array_rand($this->days);
-                
                 $maxSlotIdx = count($this->timeSlots) - $gene['sks'];
                 if ($maxSlotIdx >= 0) {
-                    $gene['slot_idx'] = rand(0, $maxSlotIdx);
+                    $newDayIdx = array_rand($this->days);
+                    $newSlotIdx = rand(0, $maxSlotIdx);
+
+                    // Try to avoid blackout
+                    for ($retry = 0; $retry < 5; $retry++) {
+                        if (!$this->isBlackout($this->days[$newDayIdx]['id'], $newSlotIdx, $gene['sks'])) {
+                            break;
+                        }
+                        $newDayIdx = array_rand($this->days);
+                        $newSlotIdx = rand(0, $maxSlotIdx);
+                    }
+
+                    $gene['day_idx'] = $newDayIdx;
+                    $gene['slot_idx'] = $newSlotIdx;
                 }
 
                 $compatibleRoomIndices = $roomsByType[$gene['offering_type']] ?? array_keys($this->rooms);
