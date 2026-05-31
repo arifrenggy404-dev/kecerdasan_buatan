@@ -155,7 +155,7 @@
                                         @foreach($c->offerings as $o)
                                             <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-0 py-2 ps-0 pe-4">
                                                 <div>
-                                                    <div class="small fw-bold">{{ $o->lecturer->name }}</div>
+                                                    <div class="small fw-bold">{{ $o->lecturer?->name ?? 'Dosen Tidak Ditemukan' }}</div>
                                                     <div class="d-flex gap-1 mt-1">
                                                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill" style="font-size: 0.65rem;">{{ $o->sks }} SKS</span>
                                                         <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill" style="font-size: 0.65rem;">{{ ucfirst($o->type) }}</span>

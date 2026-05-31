@@ -234,7 +234,7 @@
                     @endphp
                     @forelse($schedules as $s)
                         @php
-                            $dayName = $s->day->name;
+                            $dayName = $s->day?->name ?? 'Unknown';
                             $rowColor = $dayColors[$dayName] ?? 'transparent';
                             $badgeColor = $dayBadgeColors[$dayName] ?? 'dark';
                         @endphp
@@ -246,9 +246,10 @@
                             </td>
                             <td>
                                 @php
-                                    $startTime = \Carbon\Carbon::parse($s->startTimeSlot->start_time);
-                                    $sks = $s->courseOffering->sks;
-                                    $totalMinutes = ($sks * $sksDuration) + (($sks - 1) * 10);
+                                    $startTimeStr = $s->startTimeSlot?->start_time ?? '00:00';
+                                    $startTime = \Carbon\Carbon::parse($startTimeStr);
+                                    $sks = $s->courseOffering?->sks ?? 0;
+                                    $totalMinutes = ($sks * $sksDuration) + (($sks > 0 ? $sks - 1 : 0) * 10);
                                     $endTime = $startTime->copy()->addMinutes($totalMinutes);
                                 @endphp
                                 <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-medium">
@@ -256,20 +257,23 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="fw-bold">{{ $s->courseOffering->course->name }}</div>
-                                <div class="small text-muted">{{ $s->courseOffering->course->sks }} SKS</div>
+                                <div class="fw-bold">{{ $s->courseOffering?->course?->name ?? 'Mata Kuliah Tidak Ditemukan' }}</div>
+                                <div class="small text-muted">{{ $s->courseOffering?->course?->sks ?? 0 }} SKS</div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
+                                    @php
+                                        $lecturerName = $s->courseOffering?->lecturer?->name ?? 'Dosen Tidak Ditemukan';
+                                    @endphp
                                     <div class="bg-primary-subtle text-primary rounded-circle p-2 me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                                        <small>{{ substr($s->courseOffering->lecturer->name, 0, 1) }}</small>
+                                        <small>{{ substr($lecturerName, 0, 1) }}</small>
                                     </div>
-                                    <span class="small">{{ $s->courseOffering->lecturer->name }}</span>
+                                    <span class="small">{{ $lecturerName }}</span>
                                 </div>
                             </td>
                             <td class="text-center">
                                 <span class="badge bg-info-subtle text-info-emphasis px-3 py-2 border border-info-subtle">
-                                    {{ $s->room->building->name }} | {{ $s->room->name }}
+                                    {{ $s->room?->building?->name ?? 'Gedung ?' }} | {{ $s->room?->name ?? 'Ruangan ?' }}
                                 </span>
                             </td>
                         </tr>
