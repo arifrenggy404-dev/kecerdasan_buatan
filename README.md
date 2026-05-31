@@ -4,6 +4,8 @@
 
 Aplikasi berbasis Laravel untuk menghasilkan jadwal perkuliahan otomatis tanpa bentrok menggunakan optimasi Algoritma Genetika. Sistem ini dirancang untuk menangani kompleksitas penjadwalan akademik dengan mempertimbangkan keterbatasan dosen, ruangan, dan waktu secara dinamis.
 
+**🌐 Demo Link:** [https://algoritmagenetik.up.railway.app/](https://algoritmagenetik.up.railway.app/)
+
 ---
 
 ## 🚀 Cara Kerja Sistem (Algoritma Genetika)
