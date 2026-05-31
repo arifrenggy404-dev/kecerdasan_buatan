@@ -1,0 +1,243 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\CourseOffering;
+use App\Models\Room;
+use App\Models\Day;
+use App\Models\TimeSlot;
+use App\Models\Setting;
+
+class GeneticAlgorithmService
+{
+    protected array $offerings;
+    protected array $rooms;
+    protected array $days;       // Filtered Days
+    protected array $timeSlots;  // Filtered TimeSlots
+    protected int $populationSize = 60;
+    protected float $mutationRate = 0.15; // Mutasi lebih tinggi untuk variasi
+    protected int $maxGenerations = 500;
+
+    public function __construct()
+    {
+        $this->offerings = CourseOffering::select('id', 'lecturer_id', 'room_id', 'sks', 'type')->get()->toArray();
+        
+        // 1. Ambil batasan dari Setting
+        $activeDayIds = Setting::getValue('active_days', [1, 2, 3, 4, 5]);
+        $this->days = Day::whereIn('id', $activeDayIds)->orderBy('id')->get()->toArray();
+        
+        $operational = Setting::getValue('operational_hours', ['start' => '07:00', 'end' => '22:00']);
+        $blackouts = Setting::getValue('blackout_hours', []);
+        $sksDuration = Setting::getValue('sks_duration', 50);
+
+        // 2. Pastikan tabel time_slots mencukupi rentang operasional dengan durasi SKS yang baru
+        $this->ensureTimeSlotsExist($operational['start'], $operational['end'], $sksDuration);
+
+        // 3. Ambil dan filter slot waktu (Hanya yang durasinya pas dengan sks_duration saat ini)
+        // Kita bandingkan selisih waktu start dan end
+        $this->timeSlots = TimeSlot::orderBy('start_time')
+            ->whereTime('start_time', '>=', $operational['start'])
+            ->whereTime('end_time', '<=', $operational['end'])
+            ->get()
+            ->filter(function($slot) use ($blackouts, $sksDuration) {
+                // Pastikan slot ini memiliki durasi yang sesuai (untuk menghindari campur aduk slot lama/baru)
+                $duration = (strtotime($slot->end_time) - strtotime($slot->start_time)) / 60;
+                if ($duration != $sksDuration) return false;
+
+                foreach ($blackouts as $b) {
+                    if ($slot->start_time >= $b['start'] && $slot->start_time < $b['end']) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Otomatis membuat slot berdasarkan durasi SKS yang dinamis.
+     */
+    protected function ensureTimeSlotsExist($start, $end, $durationMinutes)
+    {
+        $startTime = strtotime($start);
+        $endTimeLimit = strtotime($end);
+        
+        while ($startTime < $endTimeLimit) {
+            $slotEnd = strtotime('+' . $durationMinutes . ' minutes', $startTime);
+            if ($slotEnd > $endTimeLimit) break;
+
+            $startTimeStr = date('H:i:s', $startTime);
+            $endTimeStr = date('H:i:s', $slotEnd);
+
+            // Cek apakah slot dengan jam DAN durasi tersebut sudah ada
+            $exists = TimeSlot::where('start_time', $startTimeStr)
+                ->where('end_time', $endTimeStr)
+                ->exists();
+
+            if (!$exists) {
+                TimeSlot::create([
+                    'name' => 'Slot ' . date('H:i', $startTime),
+                    'start_time' => $startTimeStr,
+                    'end_time' => $endTimeStr
+                ]);
+            }
+
+            // Jeda 10 menit antar slot
+            $startTime = strtotime('+10 minutes', $slotEnd);
+        }
+    }
+
+    public function initializePopulation(): array
+    {
+        $population = [];
+        for ($i = 0; $i < $this->populationSize; $i++) {
+            $population[] = $this->generateRandomChromosome();
+        }
+        return $population;
+    }
+
+    protected function generateRandomChromosome(): array
+    {
+        $chromosome = [];
+        foreach ($this->offerings as $offering) {
+            $sks = $offering['sks'];
+            $maxSlotIdx = count($this->timeSlots) - $sks;
+
+            if ($maxSlotIdx < 0) continue; 
+
+            $chromosome[] = [
+                'offering_id' => $offering['id'],
+                'lecturer_id' => $offering['lecturer_id'],
+                'room_id'     => $offering['room_id'],
+                'day_idx'     => array_rand($this->days), // Gunakan INDEX array
+                'slot_idx'    => rand(0, $maxSlotIdx),    // Gunakan INDEX array
+                'sks'         => $sks,
+            ];
+        }
+        return $chromosome;
+    }
+
+    /**
+     * Fitness Function - ULTRA KETAT
+     */
+    public function calculateFitness(array $chromosome): float
+    {
+        $penalty = 0;
+        $usage = []; // [type_id][day_idx][slot_idx]
+
+        foreach ($chromosome as $gene) {
+            $lId = "L" . $gene['lecturer_id'];
+            $rId = "R" . $gene['room_id'];
+            $dayIdx = $gene['day_idx'];
+            $startSlotIdx = $gene['slot_idx'];
+            $sks = $gene['sks'];
+
+            for ($i = 0; $i < $sks; $i++) {
+                $currentSlotIdx = $startSlotIdx + $i;
+
+                // 1. Cek Batas Akhir Jam (Jika melebihi slot yang tersedia hari itu)
+                if ($currentSlotIdx >= count($this->timeSlots)) {
+                    $penalty += 5000;
+                    continue;
+                }
+
+                // 2. Cek Bentrok Dosen
+                if (isset($usage[$lId][$dayIdx][$currentSlotIdx])) {
+                    $penalty += 2000; // Penalti sangat berat
+                }
+                $usage[$lId][$dayIdx][$currentSlotIdx] = true;
+
+                // 3. Cek Bentrok Ruangan
+                if (isset($usage[$rId][$dayIdx][$currentSlotIdx])) {
+                    $penalty += 2000; // Penalti sangat berat
+                }
+                $usage[$rId][$dayIdx][$currentSlotIdx] = true;
+            }
+        }
+
+        return ($penalty === 0) ? 1.0 : (1 / (1 + $penalty));
+    }
+
+    public function evolve(array $population): array
+    {
+        // Hitung fitness semua populasi dulu
+        $scored = [];
+        foreach ($population as $c) {
+            $scored[] = ['c' => $c, 'f' => $this->calculateFitness($c)];
+        }
+
+        // Sortir: Terbaik di atas
+        usort($scored, fn($a, $b) => $b['f'] <=> $a['f']);
+
+        $newPopulation = [];
+        // Elitism: Jaga 4 terbaik
+        for ($i = 0; $i < 4; $i++) {
+            $newPopulation[] = $scored[$i]['c'];
+        }
+
+        while (count($newPopulation) < $this->populationSize) {
+            $p1 = $this->tournamentSelection($scored);
+            $p2 = $this->tournamentSelection($scored);
+
+            $child = $this->crossover($p1, $p2);
+            $child = $this->mutate($child);
+            $newPopulation[] = $child;
+        }
+
+        return $newPopulation;
+    }
+
+    protected function tournamentSelection(array $scored): array
+    {
+        $best = null;
+        for ($i = 0; $i < 5; $i++) {
+            $competitor = $scored[rand(0, count($scored) - 1)];
+            if ($best === null || $competitor['f'] > $best['f']) {
+                $best = $competitor;
+            }
+        }
+        return $best['c'];
+    }
+
+    public function crossover(array $p1, array $p2): array
+    {
+        $cp = rand(0, count($p1) - 1);
+        $child = [];
+        for ($i = 0; $i < count($p1); $i++) {
+            $child[$i] = ($i < $cp) ? $p1[$i] : $p2[$i];
+        }
+        return $child;
+    }
+
+    public function mutate(array $chromosome): array
+    {
+        foreach ($chromosome as &$gene) {
+            if ((mt_rand() / mt_getrandmax()) < $this->mutationRate) {
+                $gene['day_idx'] = array_rand($this->days);
+                $maxSlotIdx = count($this->timeSlots) - $gene['sks'];
+                if ($maxSlotIdx >= 0) {
+                    $gene['slot_idx'] = rand(0, $maxSlotIdx);
+                }
+            }
+        }
+        return $chromosome;
+    }
+
+    /**
+     * Helper untuk mengubah INDEX kembali ke ID Database saat simpan.
+     */
+    public function mapIndicesToIds(array $chromosome): array
+    {
+        $final = [];
+        foreach ($chromosome as $gene) {
+            $final[] = [
+                'offering_id' => $gene['offering_id'],
+                'room_id'     => $gene['room_id'],
+                'day_id'      => $this->days[$gene['day_idx']]['id'],
+                'slot_id'     => $this->timeSlots[$gene['slot_idx']]['id'],
+            ];
+        }
+        return $final;
+    }
+}
