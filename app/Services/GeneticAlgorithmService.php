@@ -125,7 +125,7 @@ class GeneticAlgorithmService
                 ]);
             }
 
-            $startTime = strtotime('+10 minutes', $slotEnd);
+            $startTime = $slotEnd;
         }
     }
 

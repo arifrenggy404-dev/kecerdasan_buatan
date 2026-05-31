@@ -249,7 +249,7 @@
                                     $startTimeStr = $s->startTimeSlot?->start_time ?? '00:00';
                                     $startTime = \Carbon\Carbon::parse($startTimeStr);
                                     $sks = $s->courseOffering?->sks ?? 0;
-                                    $totalMinutes = ($sks * $sksDuration) + (($sks > 0 ? $sks - 1 : 0) * 10);
+                                    $totalMinutes = $sks * $sksDuration;
                                     $endTime = $startTime->copy()->addMinutes($totalMinutes);
                                 @endphp
                                 <span class="badge bg-dark-subtle text-dark border border-dark-subtle fw-medium">
