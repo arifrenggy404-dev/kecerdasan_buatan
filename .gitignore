@@ -17,3 +17,6 @@ yarn-error.log
 /.phpunit.cache
 /tests/Feature/.phpunit.cache
 /tests/Unit/.phpunit.cache
+/.agents
+/.gemini
+/GEMINI.md
