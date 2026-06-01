@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\CourseOffering;
 use App\Models\Lecturer;
 use App\Models\Room;
+use App\Models\Building;
+use App\Models\Course;
 use App\Models\Schedule;
 use App\Models\TimeSlot;
 use App\Services\GeneticAlgorithmService;
@@ -15,6 +17,12 @@ class ScheduleController extends Controller
 {
     public function index()
     {
+        $lecturersCount = Lecturer::count();
+        $coursesCount = Course::count();
+        $roomsCount = Room::count();
+        $buildingsCount = Building::count();
+        $offeringsCount = CourseOffering::count();
+
         $lecturers = Lecturer::all();
         $rooms = Room::all();
         $offerings = CourseOffering::with(['course', 'lecturer'])->get();
@@ -24,7 +32,17 @@ class ScheduleController extends Controller
             ->get()
             ->sortBy(['day_id', 'start_time_slot_id']);
 
-        return view('schedules.index', compact('lecturers', 'rooms', 'offerings', 'schedules'));
+        return view('schedules.index', compact(
+            'lecturersCount', 
+            'coursesCount', 
+            'roomsCount', 
+            'buildingsCount', 
+            'offeringsCount',
+            'lecturers', 
+            'rooms', 
+            'offerings', 
+            'schedules'
+        ));
     }
 
     public function generate(GeneticAlgorithmService $gaService)
