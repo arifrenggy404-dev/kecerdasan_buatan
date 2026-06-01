@@ -129,4 +129,76 @@ class ScheduleController extends Controller
 
         return redirect()->back()->with('success', 'Seluruh hasil jadwal berhasil dihapus.');
     }
+
+    public function exportCsv()
+    {
+        $schedules = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot'])
+            ->get()
+            ->sortBy(['day_id', 'start_time_slot_id']);
+
+        if ($schedules->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada jadwal untuk diekspor.');
+        }
+
+        $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
+        $filename = "jadwal_perkuliahan_" . date('Y-m-d_H-i') . ".csv";
+        
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['Hari', 'Waktu Mulai', 'Waktu Selesai', 'Mata Kuliah', 'SKS', 'Dosen', 'Gedung', 'Ruangan'];
+
+        $callback = function() use ($schedules, $columns, $sksDuration) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($schedules as $s) {
+                $startTimeStr = $s->startTimeSlot?->start_time ?? '00:00';
+                $startTime = \Carbon\Carbon::parse($startTimeStr);
+                $sks = $s->courseOffering?->sks ?? 0;
+                $totalMinutes = $sks * $sksDuration;
+                $endTime = $startTime->copy()->addMinutes($totalMinutes);
+
+                fputcsv($file, [
+                    $s->day?->name ?? '-',
+                    $startTime->format('H:i'),
+                    $endTime->format('H:i'),
+                    $s->courseOffering?->course?->name ?? '-',
+                    $sks,
+                    $s->courseOffering?->lecturer?->name ?? '-',
+                    $s->room?->building?->name ?? '-',
+                    $s->room?->name ?? '-'
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportPdf()
+    {
+        if (!class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            return redirect()->back()->with('error', 'Fitur PDF memerlukan package dompdf. Silakan jalankan: composer require barryvdh/laravel-dompdf');
+        }
+
+        $schedules = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot'])
+            ->get()
+            ->sortBy(['day_id', 'start_time_slot_id']);
+
+        if ($schedules->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada jadwal untuk diekspor.');
+        }
+
+        $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('schedules.pdf', compact('schedules', 'sksDuration'));
+        return $pdf->download('jadwal_perkuliahan_' . date('Y-m-d_H-i') . '.pdf');
+    }
 }

@@ -187,6 +187,15 @@
         <h5 class="fw-bold mb-0 text-primary">Hasil Penjadwalan Terakhir</h5>
         <div class="d-flex align-items-center gap-3">
             @if(count($schedules) > 0)
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle rounded-pill px-3" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i> Ekspor Jadwal
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                        <li><a class="dropdown-item small" href="{{ route('schedules.export.csv') }}"><i class="bi bi-filetype-csv me-2 text-success"></i> Ekspor ke CSV</a></li>
+                        <li><a class="dropdown-item small" href="{{ route('schedules.export.pdf') }}"><i class="bi bi-filetype-pdf me-2 text-danger"></i> Ekspor ke PDF</a></li>
+                    </ul>
+                </div>
                 <form action="{{ route('schedules.clear') }}" method="POST" id="resetForm">
                     @csrf
                     @method('DELETE')
