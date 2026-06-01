@@ -34,4 +34,9 @@ class Schedule extends Model
     {
         return $this->belongsTo(TimeSlot::class, 'start_time_slot_id');
     }
+
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(ScheduleBatch::class, 'batch_id', 'id');
+    }
 }

@@ -165,11 +165,14 @@
                     </div>
                     <div class="col-12 p-5 bg-white d-flex flex-column justify-content-center text-center">
                         <h4 class="fw-bold mb-3">Generasi Jadwal</h4>
-                        <p class="text-muted mb-4 px-md-5">Pastikan seluruh data dosen, ruangan, dan mata kuliah telah diinput dengan benar sebelum menjalankan algoritma.</p>
+                        <p class="text-muted mb-4 px-md-5">Sistem akan mencari kombinasi jadwal terbaik. Anda dapat menyimpan hasilnya sebagai draft baru.</p>
                         <div class="d-flex justify-content-center">
-                            <form action="{{ route('schedules.generate') }}" method="POST" id="generateForm">
+                            <form action="{{ route('schedules.generate') }}" method="POST" id="generateForm" class="w-100" style="max-width: 400px;">
                                 @csrf
-                                <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow-lg transition-all hover-translate-y">
+                                <div class="mb-3">
+                                    <input type="text" name="name" class="form-control form-control-lg rounded-pill text-center border-2 shadow-sm" placeholder="Beri nama draft ini (opsional)">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-lg transition-all hover-translate-y">
                                     <i class="bi bi-cpu me-2"></i> Jalankan Algoritma Genetika
                                 </button>
                             </form>
@@ -181,23 +184,71 @@
     </div>
 </div>
 
+@if(count($batches) > 0)
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-3 d-flex align-items-center gap-3 overflow-auto">
+                <span class="fw-bold text-muted small text-uppercase flex-shrink-0 ms-2">Daftar Draft:</span>
+                @foreach($batches as $batch)
+                    <a href="{{ route('schedules.index', ['batch_id' => $batch->id]) }}" 
+                       class="btn {{ ($selectedBatch && $selectedBatch->id == $batch->id) ? 'btn-primary' : 'btn-outline-secondary' }} rounded-pill px-4 text-nowrap position-relative">
+                        {{ $batch->name }}
+                        @if($batch->is_published)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success border border-white">
+                                <i class="bi bi-check-lg"></i>
+                            </span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <div id="scheduleResultsContainer">
 <div id="scheduleResults" class="card border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold mb-0 text-primary">Hasil Penjadwalan Terakhir</h5>
-        <div class="d-flex align-items-center gap-3">
-            @if(count($schedules) > 0)
-                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#exportModal">
-                    <i class="bi bi-download me-1"></i> Ekspor Jadwal
-                </button>
-                <form action="{{ route('schedules.clear') }}" method="POST" id="resetForm">
+        <div>
+            <h5 class="fw-bold mb-0 text-primary">
+                {{ $selectedBatch ? $selectedBatch->name : 'Hasil Penjadwalan' }}
+                @if($selectedBatch && $selectedBatch->is_published)
+                    <span class="badge bg-success-subtle text-success fs-6 fw-normal rounded-pill px-3 ms-2 border border-success-subtle">Utama</span>
+                @endif
+            </h5>
+            @if($selectedBatch)
+                <div class="small text-muted mt-1">
+                    Fitness: <span class="fw-bold">{{ number_format($selectedBatch->fitness, 4) }}</span> | 
+                    Generasi: <span class="fw-bold">{{ $selectedBatch->generations }}</span> | 
+                    Dibuat: {{ $selectedBatch->created_at->diffForHumans() }}
+                </div>
+            @endif
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            @if($selectedBatch)
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#exportModal">
+                        <i class="bi bi-download me-1"></i> Ekspor
+                    </button>
+                </div>
+                
+                @if(!$selectedBatch->is_published)
+                    <form action="{{ route('schedules.batch.publish', $selectedBatch->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                            <i class="bi bi-megaphone me-1"></i> Publikasikan
+                        </button>
+                    </form>
+                @endif
+
+                <form action="{{ route('schedules.batch.destroy', $selectedBatch->id) }}" method="POST" onsubmit="return confirm('Hapus draft ini?')">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                        <i class="bi bi-trash3 me-1"></i> Reset Jadwal
+                        <i class="bi bi-trash3 me-1"></i> Hapus
                     </button>
                 </form>
-                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 border border-success-subtle">Selesai di-generate</span>
             @endif
         </div>
     </div>
@@ -365,12 +416,17 @@
     document.getElementById('btnProcessExport').addEventListener('click', function() {
         const filename = document.getElementById('customFilename').value.trim();
         const format = document.querySelector('input[name="exportFormat"]:checked').value;
+        const selectedBatchId = "{{ $selectedBatch ? $selectedBatch->id : '' }}";
         
         let baseUrl = format === 'csv' ? "{{ route('schedules.export.csv') }}" : "{{ route('schedules.export.pdf') }}";
         let url = new URL(baseUrl, window.location.origin);
         
         if (filename) {
             url.searchParams.append('filename', filename);
+        }
+        
+        if (selectedBatchId) {
+            url.searchParams.append('batch_id', selectedBatchId);
         }
         
         // Trigger download
@@ -513,7 +569,8 @@
         })
         .then(data => {
             if (data && data.success) {
-                updateResults(data.message);
+                // Redirect ke batch baru
+                window.location.href = "{{ route('schedules.index') }}?batch_id=" + data.batch_id;
             }
         })
         .catch(error => {

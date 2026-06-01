@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
 Route::post('/generate', [ScheduleController::class, 'generate'])->name('schedules.generate');
 Route::delete('/schedules/clear', [ScheduleController::class, 'destroyAll'])->name('schedules.clear');
+Route::delete('/schedules/batch/{batch}', [ScheduleController::class, 'destroyBatch'])->name('schedules.batch.destroy');
+Route::post('/schedules/batch/{batch}/publish', [ScheduleController::class, 'publish'])->name('schedules.batch.publish');
 Route::get('/schedules/export/csv', [ScheduleController::class, 'exportCsv'])->name('schedules.export.csv');
 Route::get('/schedules/export/pdf', [ScheduleController::class, 'exportPdf'])->name('schedules.export.pdf');
 

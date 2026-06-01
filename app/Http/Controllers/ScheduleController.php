@@ -8,32 +8,49 @@ use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\TimeSlot;
 use App\Services\GeneticAlgorithmService;
+use App\Models\ScheduleBatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ScheduleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $lecturers = Lecturer::all();
         $rooms = Room::all();
         $offerings = CourseOffering::with(['course', 'lecturer'])->get();
         
-        // Ambil semua jadwal (karena kita akan truncate setiap generate baru)
-        $schedules = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot'])
-            ->get()
-            ->sortBy(['day_id', 'start_time_slot_id']);
+        $batches = ScheduleBatch::latest()->get();
+        
+        $selectedBatchId = $request->query('batch_id');
+        $selectedBatch = null;
 
-        return view('schedules.index', compact('lecturers', 'rooms', 'offerings', 'schedules'));
+        if ($selectedBatchId) {
+            $selectedBatch = ScheduleBatch::find($selectedBatchId);
+        }
+
+        if (!$selectedBatch) {
+            $selectedBatch = ScheduleBatch::where('is_published', true)->first() ?? ScheduleBatch::latest()->first();
+        }
+
+        $schedules = collect();
+        if ($selectedBatch) {
+            $schedules = Schedule::where('batch_id', $selectedBatch->id)
+                ->with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot'])
+                ->get()
+                ->sortBy(['day_id', 'start_time_slot_id']);
+        }
+
+        return view('schedules.index', compact('lecturers', 'rooms', 'offerings', 'schedules', 'batches', 'selectedBatch'));
     }
 
-    public function generate(GeneticAlgorithmService $gaService)
+    public function generate(Request $request, GeneticAlgorithmService $gaService)
     {
         // Validasi ketersediaan data dasar
         $errors = $gaService->checkRequirements();
         if (!empty($errors)) {
             $msg = 'Gagal memulai: ' . implode(' ', $errors);
-            if (request()->ajax()) {
+            if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
             return redirect()->back()->with('error', $msg);
@@ -50,37 +67,37 @@ class ScheduleController extends Controller
 
         // 2. Evolusi hingga Fitness = 1.0 (MUTLAK NOL BENTROK)
         for ($i = 0; $i < $maxGenerations; $i++) {
-            // evolve sekarang menerima index generasi untuk adaptive mutation
             $scoredPopulation = $gaService->evolve($population, $i);
-            
-            // Ambil yang terbaik dari generasi ini (sudah di-sort oleh evolve)
             $currentBest = $scoredPopulation[0]['c'];
             $currentFitness = $scoredPopulation[0]['f'];
 
-            // Update Best Overall
             if ($currentFitness > $bestFitness) {
                 $bestFitness = $currentFitness;
                 $bestChromosome = $currentBest;
             }
 
-            // Siapkan populasi untuk generasi berikutnya
             $population = $scoredPopulation;
-
-            // BERHENTI JIKA ZERO PENALTY (1.0)
-            if ($bestFitness >= 1.0) {
-                break;
-            }
+            if ($bestFitness >= 1.0) break;
         }
 
         // 3. Simpan MUTLAK hanya jika SEMPURNA (Fitness = 1.0 / Nol Bentrok)
         if ($bestChromosome && $bestFitness >= 1.0) {
-            // Gunakan Database Transaction untuk keamanan data
-            \Illuminate\Support\Facades\DB::transaction(function() use ($bestChromosome, $gaService) {
-                Schedule::query()->delete();
+            $batchId = (string) Str::uuid();
+            $generationsCount = $i + 1;
 
-                $batchId = (string) Str::uuid();
+            \Illuminate\Support\Facades\DB::transaction(function() use ($bestChromosome, $gaService, $batchId, $request, $bestFitness, $generationsCount) {
+                $draftCount = ScheduleBatch::count() + 1;
+                $batchName = $request->name ?: "Draft Jadwal #" . $draftCount;
+
+                ScheduleBatch::create([
+                    'id' => $batchId,
+                    'name' => $batchName,
+                    'fitness' => $bestFitness,
+                    'generations' => $generationsCount,
+                    'is_published' => ScheduleBatch::count() === 0 // Publish otomatis jika ini batch pertama
+                ]);
+
                 $finalSchedule = $gaService->mapIndicesToIds($bestChromosome);
-
                 foreach ($finalSchedule as $data) {
                     Schedule::create([
                         'course_offering_id' => $data['offering_id'],
@@ -92,57 +109,74 @@ class ScheduleController extends Controller
                 }
             });
 
-            if (request()->ajax()) {
+            if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Jadwal SEMPURNA (Nol Bentrok) berhasil dihasilkan dalam ' . ($i + 1) . ' generasi!'
+                    'message' => 'Draft jadwal baru berhasil dihasilkan!',
+                    'batch_id' => $batchId
                 ]);
             }
 
-            return redirect()->back()->with('success', 'Jadwal SEMPURNA (Nol Bentrok) berhasil dihasilkan dalam ' . ($i + 1) . ' generasi!');
+            return redirect()->route('schedules.index', ['batch_id' => $batchId])->with('success', 'Draft jadwal baru berhasil dihasilkan!');
         }
 
-        // 4. JIKA GAGAL (Ada pinalti), JANGAN SIMPAN APAPUN DAN BERI ERROR
+        // 4. JIKA GAGAL
         $penaltyAmount = ($bestFitness > 0) ? (round(1 / $bestFitness) - 1) : 'Banyak';
-        $errorMessage = "GAGAL! Sistem tidak menemukan jadwal yang benar-benar bersih. Masih ada {$penaltyAmount} bentrok. Data TIDAK disimpan ke database.";
+        $errorMessage = "GAGAL! Sistem tidak menemukan jadwal yang benar-benar bersih. Masih ada {$penaltyAmount} bentrok.";
 
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => $errorMessage
-            ], 422);
+        if ($request->ajax()) {
+            return response()->json(['success' => false, 'message' => $errorMessage], 422);
         }
 
-        return redirect()->back()->with('error', $errorMessage . " Silakan coba generate ulang atau tambah kapasitas ruangan/hari.");
-        }
+        return redirect()->back()->with('error', $errorMessage);
+    }
+
+    public function publish(ScheduleBatch $batch)
+    {
+        ScheduleBatch::query()->update(['is_published' => false]);
+        $batch->update(['is_published' => true]);
+
+        return redirect()->route('schedules.index', ['batch_id' => $batch->id])->with('success', 'Jadwal "' . $batch->name . '" telah dipublikasikan sebagai jadwal utama.');
+    }
+
+    public function destroyBatch(ScheduleBatch $batch)
+    {
+        $batch->delete(); // Cascading delete should handle schedules if configured, otherwise manual:
+        Schedule::where('batch_id', $batch->id)->delete();
+
+        return redirect()->route('schedules.index')->with('success', 'Draft jadwal berhasil dihapus.');
+    }
 
     public function destroyAll()
     {
-        \App\Models\Schedule::query()->delete();
+        Schedule::query()->delete();
+        ScheduleBatch::query()->delete();
 
         if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Seluruh hasil jadwal berhasil dihapus.'
-            ]);
+            return response()->json(['success' => true, 'message' => 'Seluruh data draft jadwal berhasil dihapus.']);
         }
 
-        return redirect()->back()->with('success', 'Seluruh hasil jadwal berhasil dihapus.');
+        return redirect()->back()->with('success', 'Seluruh data draft jadwal berhasil dihapus.');
     }
 
     public function exportCsv(Request $request)
     {
-        $schedules = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot'])
-            ->get()
-            ->sortBy(['day_id', 'start_time_slot_id']);
+        $batchId = $request->query('batch_id');
+        $batch = ScheduleBatch::find($batchId);
+        
+        $query = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot']);
+        if ($batchId) {
+            $query->where('batch_id', $batchId);
+        }
+
+        $schedules = $query->get()->sortBy(['day_id', 'start_time_slot_id']);
 
         if ($schedules->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada jadwal untuk diekspor.');
         }
 
         $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
-        
-        $rawFilename = $request->query('filename') ?: "jadwal_perkuliahan_" . date('Y-m-d_H-i');
+        $rawFilename = $request->query('filename') ?: ($batch ? $batch->name : "jadwal_perkuliahan_" . date('Y-m-d_H-i'));
         $filename = Str::slug($rawFilename) . ".csv";
         
         $headers = [
@@ -187,20 +221,25 @@ class ScheduleController extends Controller
     public function exportPdf(Request $request)
     {
         if (!class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            return redirect()->back()->with('error', 'Fitur PDF memerlukan package dompdf. Silakan jalankan: composer require barryvdh/laravel-dompdf');
+            return redirect()->back()->with('error', 'Fitur PDF memerlukan package dompdf.');
         }
 
-        $schedules = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot'])
-            ->get()
-            ->sortBy(['day_id', 'start_time_slot_id']);
+        $batchId = $request->query('batch_id');
+        $batch = ScheduleBatch::find($batchId);
+
+        $query = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot']);
+        if ($batchId) {
+            $query->where('batch_id', $batchId);
+        }
+
+        $schedules = $query->get()->sortBy(['day_id', 'start_time_slot_id']);
 
         if ($schedules->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada jadwal untuk diekspor.');
         }
 
         $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
-        
-        $rawFilename = $request->query('filename') ?: "jadwal_perkuliahan_" . date('Y-m-d_H-i');
+        $rawFilename = $request->query('filename') ?: ($batch ? $batch->name : "jadwal_perkuliahan_" . date('Y-m-d_H-i'));
         $filename = Str::slug($rawFilename) . ".pdf";
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('schedules.pdf', compact('schedules', 'sksDuration'));
