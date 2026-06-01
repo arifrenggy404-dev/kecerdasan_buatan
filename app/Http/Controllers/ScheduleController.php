@@ -130,7 +130,7 @@ class ScheduleController extends Controller
         return redirect()->back()->with('success', 'Seluruh hasil jadwal berhasil dihapus.');
     }
 
-    public function exportCsv()
+    public function exportCsv(Request $request)
     {
         $schedules = Schedule::with(['courseOffering.course', 'courseOffering.lecturer', 'room', 'day', 'startTimeSlot'])
             ->get()
@@ -141,7 +141,9 @@ class ScheduleController extends Controller
         }
 
         $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
-        $filename = "jadwal_perkuliahan_" . date('Y-m-d_H-i') . ".csv";
+        
+        $rawFilename = $request->query('filename') ?: "jadwal_perkuliahan_" . date('Y-m-d_H-i');
+        $filename = Str::slug($rawFilename) . ".csv";
         
         $headers = [
             "Content-type"        => "text/csv",
@@ -182,7 +184,7 @@ class ScheduleController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    public function exportPdf()
+    public function exportPdf(Request $request)
     {
         if (!class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
             return redirect()->back()->with('error', 'Fitur PDF memerlukan package dompdf. Silakan jalankan: composer require barryvdh/laravel-dompdf');
@@ -198,7 +200,10 @@ class ScheduleController extends Controller
 
         $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
         
+        $rawFilename = $request->query('filename') ?: "jadwal_perkuliahan_" . date('Y-m-d_H-i');
+        $filename = Str::slug($rawFilename) . ".pdf";
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('schedules.pdf', compact('schedules', 'sksDuration'));
-        return $pdf->download('jadwal_perkuliahan_' . date('Y-m-d_H-i') . '.pdf');
+        return $pdf->download($filename);
     }
 }

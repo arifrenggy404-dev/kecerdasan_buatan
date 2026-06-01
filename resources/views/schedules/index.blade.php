@@ -187,15 +187,9 @@
         <h5 class="fw-bold mb-0 text-primary">Hasil Penjadwalan Terakhir</h5>
         <div class="d-flex align-items-center gap-3">
             @if(count($schedules) > 0)
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle rounded-pill px-3" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-download me-1"></i> Ekspor Jadwal
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                        <li><a class="dropdown-item small" href="{{ route('schedules.export.csv') }}"><i class="bi bi-filetype-csv me-2 text-success"></i> Ekspor ke CSV</a></li>
-                        <li><a class="dropdown-item small" href="{{ route('schedules.export.pdf') }}"><i class="bi bi-filetype-pdf me-2 text-danger"></i> Ekspor ke PDF</a></li>
-                    </ul>
-                </div>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#exportModal">
+                    <i class="bi bi-download me-1"></i> Ekspor Jadwal
+                </button>
                 <form action="{{ route('schedules.clear') }}" method="POST" id="resetForm">
                     @csrf
                     @method('DELETE')
@@ -313,8 +307,78 @@
 </style>
 @endsection
 
+@push('modals')
+<!-- Modal Ekspor -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="exportModalLabel">Ekspor Hasil Jadwal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-2">Nama File</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-file-earmark-text"></i></span>
+                        <input type="text" id="customFilename" class="form-control bg-light border-0 py-2" placeholder="jadwal_perkuliahan_{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="form-text mt-2 small">Biarkan kosong untuk nama default.</div>
+                </div>
+                
+                <div class="mb-0">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-2">Pilih Format</label>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="exportFormat" id="formatCSV" value="csv" checked>
+                            <label class="btn btn-outline-success w-100 py-3 rounded-3 d-flex flex-column align-items-center gap-2" for="formatCSV">
+                                <i class="bi bi-filetype-csv fs-4"></i>
+                                <span class="small fw-bold">Excel / CSV</span>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="exportFormat" id="formatPDF" value="pdf">
+                            <label class="btn btn-outline-danger w-100 py-3 rounded-3 d-flex flex-column align-items-center gap-2" for="formatPDF">
+                                <i class="bi bi-filetype-pdf fs-4"></i>
+                                <span class="small fw-bold">Dokumen PDF</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 p-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                <button type="button" id="btnProcessExport" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                    Mulai Ekspor <i class="bi bi-arrow-right-short ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endpush
+
 @push('scripts')
 <script>
+    // ... (rest of existing scripts)
+    
+    // Logic for Custom Export
+    document.getElementById('btnProcessExport').addEventListener('click', function() {
+        const filename = document.getElementById('customFilename').value.trim();
+        const format = document.querySelector('input[name="exportFormat"]:checked').value;
+        
+        let baseUrl = format === 'csv' ? "{{ route('schedules.export.csv') }}" : "{{ route('schedules.export.pdf') }}";
+        let url = new URL(baseUrl, window.location.origin);
+        
+        if (filename) {
+            url.searchParams.append('filename', filename);
+        }
+        
+        // Trigger download
+        window.location.href = url.toString();
+        
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+    });
     const Toast = Swal.mixin({
         toast: true,
         position: 'top-end',
