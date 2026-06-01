@@ -328,15 +328,59 @@
 
 @push('scripts')
 <script>
-    document.getElementById('btnProcessExport').addEventListener('click', function() {
-        const filename = document.getElementById('customFilename').value.trim();
-        const format = document.querySelector('input[name="exportFormat"]:checked').value;
-        let baseUrl = format === 'csv' ? "{{ route('schedules.export.csv') }}" : "{{ route('schedules.export.pdf') }}";
-        let url = new URL(baseUrl, window.location.origin);
-        if (filename) url.searchParams.append('filename', filename);
-        window.location.href = url.toString();
-        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
-    });
+    function initSchedulePage() {
+        const generateForm = document.getElementById('generateForm');
+        if (generateForm) {
+            generateForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const form = this;
+                document.getElementById('loading').style.display = 'flex';
+                fetch(form.getAttribute('action'), {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value
+                    }
+                })
+                .then(async res => { 
+                    const data = await res.json(); 
+                    if (!res.ok) throw new Error(data.message); 
+                    return data; 
+                })
+                .then(data => { 
+                    if (data.success) updateResults(data.message); 
+                })
+                .catch(err => { 
+                    Swal.fire({ icon: 'error', title: 'Opps!', text: err.message, confirmButtonColor: '#0d6efd', borderRadius: '1rem' }); 
+                })
+                .finally(() => { 
+                    document.getElementById('loading').style.display = 'none'; 
+                });
+            });
+        }
+
+        const btnProcessExport = document.getElementById('btnProcessExport');
+        if (btnProcessExport) {
+            btnProcessExport.addEventListener('click', function() {
+                const filename = document.getElementById('customFilename').value.trim();
+                const format = document.querySelector('input[name="exportFormat"]:checked').value;
+                let baseUrl = format === 'csv' ? "{{ route('schedules.export.csv') }}" : "{{ route('schedules.export.pdf') }}";
+                let url = new URL(baseUrl, window.location.origin);
+                if (filename) url.searchParams.append('filename', filename);
+                window.location.href = url.toString();
+                
+                const exportModal = document.getElementById('exportModal');
+                if (exportModal) {
+                    const modalInstance = bootstrap.Modal.getInstance(exportModal);
+                    if (modalInstance) modalInstance.hide();
+                }
+            });
+        }
+
+        attachResetListener();
+    }
 
     function updateResults(message, type = 'success') {
         fetch(window.location.pathname, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -368,17 +412,6 @@
         }
     }
 
-    document.getElementById('generateForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const form = this;
-        document.getElementById('loading').style.display = 'flex';
-        fetch(form.getAttribute('action'), { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value } })
-        .then(async res => { const data = await res.json(); if (!res.ok) throw new Error(data.message); return data; })
-        .then(data => { if (data.success) updateResults(data.message); })
-        .catch(err => { Swal.fire({ icon: 'error', title: 'Opps!', text: err.message, confirmButtonColor: '#0d6efd', borderRadius: '1rem' }); })
-        .finally(() => { document.getElementById('loading').style.display = 'none'; });
-    });
-
-    attachResetListener();
+    document.addEventListener('turbo:load', initSchedulePage);
 </script>
 @endpush
