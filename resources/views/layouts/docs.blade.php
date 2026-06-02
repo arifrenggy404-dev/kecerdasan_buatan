@@ -81,10 +81,24 @@
             <a class="nav-link {{ Request::routeIs('docs.usage') ? 'active' : '' }}" href="{{ route('docs.usage') }}">
                 <i class="bi bi-book me-2"></i> Cara Penggunaan
             </a>
+            <a class="nav-link {{ Request::routeIs('docs.export') ? 'active' : '' }}" href="{{ route('docs.export') }}">
+                <i class="bi bi-file-earmark-arrow-down me-2"></i> Ekspor & Laporan
+            </a>
 
             <div class="text-uppercase small fw-bold text-muted mt-4 mb-3 px-3" style="letter-spacing: 1px;">Teknis</div>
+            <a class="nav-link {{ Request::routeIs('docs.architecture') ? 'active' : '' }}" href="{{ route('docs.architecture') }}">
+                <i class="bi bi-database me-2"></i> Arsitektur Data
+            </a>
             <a class="nav-link {{ Request::routeIs('docs.algorithm') ? 'active' : '' }}" href="{{ route('docs.algorithm') }}">
                 <i class="bi bi-diagram-3 me-2"></i> Algoritma Genetika
+            </a>
+
+            <div class="text-uppercase small fw-bold text-muted mt-4 mb-3 px-3" style="letter-spacing: 1px;">Bantuan</div>
+            <a class="nav-link {{ Request::routeIs('docs.troubleshooting') ? 'active' : '' }}" href="{{ route('docs.troubleshooting') }}">
+                <i class="bi bi-patch-question me-2"></i> Troubleshooting
+            </a>
+            <a class="nav-link {{ Request::routeIs('docs.faq') ? 'active' : '' }}" href="{{ route('docs.faq') }}">
+                <i class="bi bi-chat-dots me-2"></i> FAQ
             </a>
 
             <div class="mt-5 px-3">

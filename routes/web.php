@@ -20,6 +20,10 @@ Route::prefix('docs')->group(function () {
     Route::get('/', [DocumentationController::class, 'index'])->name('docs.index');
     Route::get('/usage', [DocumentationController::class, 'usage'])->name('docs.usage');
     Route::get('/algorithm', [DocumentationController::class, 'algorithm'])->name('docs.algorithm');
+    Route::get('/architecture', [DocumentationController::class, 'architecture'])->name('docs.architecture');
+    Route::get('/troubleshooting', [DocumentationController::class, 'troubleshooting'])->name('docs.troubleshooting');
+    Route::get('/export', [DocumentationController::class, 'export'])->name('docs.export');
+    Route::get('/faq', [DocumentationController::class, 'faq'])->name('docs.faq');
 });
 
 Route::resource('lecturers', LecturerController::class)->only(['index', 'store', 'update', 'destroy']);
