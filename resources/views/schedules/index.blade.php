@@ -412,7 +412,7 @@
                 ];
 
                 let logIdx = 0;
-                const logInterval = setInterval(() => {
+                function processNextLog() {
                     if (logIdx < logs.length) {
                         const currentLog = logs[logIdx];
                         
@@ -449,10 +449,19 @@
                         }
 
                         logIdx++;
-                    } else {
-                        clearInterval(logInterval);
+                        
+                        // Dinamis delay: Lebih lama saat proses evolusi atau stagnasi
+                        let nextDelay = 800; // Base delay lebih lama (sebelumnya 350)
+                        if (currentLog.includes('Generation')) nextDelay = 1200;
+                        if (currentLog.includes('Stagnation')) nextDelay = 2000;
+                        if (currentLog.includes('OPTIMAL')) nextDelay = 1500;
+                        
+                        setTimeout(processNextLog, nextDelay);
                     }
-                }, 350);
+                }
+
+                // Mulai proses simulasi log
+                processNextLog();
 
                 fetch(form.getAttribute('action'), {
                     method: 'POST',
