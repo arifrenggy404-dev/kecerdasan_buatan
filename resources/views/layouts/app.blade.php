@@ -174,8 +174,6 @@
                         <div id="algorithmProgressBar" class="progress-bar progress-bar-striped progress-bar-animated shadow-sm" role="progressbar" style="width: 0%; transition: width 0.4s ease;"></div>
                     </div>
                 </div>
-                <div id="loadingLog" class="loading-log">
-                    <div><span class="text-secondary">#</span> Initializing Engine...</div>
                 </div>
             </div>
         </div>

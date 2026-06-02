@@ -380,11 +380,6 @@
             generateForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const form = this;
-                const logContent = document.getElementById('loadingLog');
-                
-                // Reset log content
-                logContent.innerHTML = '<div><span class="text-secondary">#</span> Initializing Genetic Engine...</div>';
-                
                 const progressBar = document.getElementById('algorithmProgressBar');
                 const progressPercentage = document.getElementById('progressPercentage');
                 const progressStatus = document.getElementById('progressStatus');
@@ -420,12 +415,6 @@
                 const logInterval = setInterval(() => {
                     if (logIdx < logs.length) {
                         const currentLog = logs[logIdx];
-                        const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                        const line = document.createElement('div');
-                        line.style.marginBottom = "4px";
-                        line.innerHTML = `<span style="color: #6c757d;">[${time}]</span> <span style="color: #0dcaf0;">></span> ${currentLog}`;
-                        logContent.appendChild(line);
-                        logContent.scrollTop = logContent.scrollHeight;
                         
                         // Update Progress Bar
                         if (progressBar && progressPercentage && progressStatus) {
