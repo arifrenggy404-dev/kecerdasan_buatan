@@ -7,8 +7,15 @@
     <h1 class="display-6 fw-bold text-dark mb-4">Ekspor & Laporan Jadwal</h1>
     
     <p class="text-muted mb-5">
-        Setelah jadwal berhasil dibuat, Anda dapat membagikannya atau menggunakannya di aplikasi lain melalui fitur ekspor.
+        Setelah jadwal berhasil dibuat, Anda dapat membagikannya atau menggunakannya di aplikasi lain melalui fitur ekspor. Sistem ini secara cerdas mengelompokkan data berdasarkan semester untuk kemudahan pembacaan.
     </p>
+
+    <div class="p-4 bg-primary-subtle border-start border-5 border-primary rounded-4 mb-5">
+        <h6 class="fw-bold text-primary mb-2"><i class="bi bi-layers-half me-2"></i>Fitur Baru: Organisasi Berbasis Semester</h6>
+        <p class="small text-muted mb-0">
+            Seluruh hasil ekspor (baik PDF maupun CSV) kini mengikuti format <strong>Semester Grouping</strong>. Data tidak lagi dicampur aduk, melainkan dipisahkan secara rapi per tingkat semester, memudahkan dosen wali dan kaprodi dalam memantau jadwal angkatan tertentu.
+        </p>
+    </div>
 
     <div class="row g-4 mb-5">
         <div class="col-6">
