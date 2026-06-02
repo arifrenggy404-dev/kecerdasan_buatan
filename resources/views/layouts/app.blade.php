@@ -13,6 +13,30 @@
             min-width: 1024px;
             overflow-x: auto;
         }
+        .docs-shortcut {
+            position: fixed;
+            top: 25px;
+            left: 25px;
+            z-index: 1050;
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: #0d6efd;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .docs-shortcut:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            background: #0d6efd;
+            color: white;
+        }
         .loading-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -83,6 +107,10 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <a href="{{ route('docs.index') }}" class="docs-shortcut shadow-sm" title="Dokumentasi Sistem">
+        <i class="bi bi-book fs-4"></i>
+    </a>
+
     <div id="loading" class="loading-overlay">
         <div class="loading-card">
             <div class="dna-loader">
