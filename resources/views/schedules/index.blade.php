@@ -148,7 +148,7 @@
                         </button>
                     </form>
                     <div class="mt-4 text-muted small">
-                        <i class="bi bi-info-circle me-1"></i> Proses ini mungkin memakan waktu beberapa detik.
+                        <i class="bi bi-info-circle me-1"></i> Proses ini mungkin memakan waktu beberapa detik. Lihat <a href="{{ route('docs.index') }}" class="text-primary text-decoration-none fw-bold">Dokumentasi</a> untuk panduan lebih lanjut.
                     </div>
                 </div>
             </div>
