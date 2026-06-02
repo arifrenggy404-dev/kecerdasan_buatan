@@ -48,26 +48,29 @@ for ($retry = 0; $retry < 10; $retry++) {
 
     <!-- 3. Perhitungan Fitness -->
     <div class="mb-5">
-        <h4 class="fw-bold text-dark mb-3">3. Evaluasi Fitness & Penalti</h4>
+        <h4 class="fw-bold text-dark mb-3">3. Evaluasi Fitness & Sinkronisasi Tipe Data</h4>
         <p class="text-muted">
-            Fungsi ini adalah "otak" dari sistem. Ia memeriksa setiap pasang jadwal untuk menemukan pelanggaran aturan. Jika terjadi bentrok, nilai <strong>Penalty</strong> akan bertambah drastis.
+            Fungsi ini adalah "otak" dari sistem. Ia memeriksa setiap pasang jadwal untuk menemukan pelanggaran aturan. Sistem menggunakan teknik <strong>Robust Comparison</strong> untuk menjamin akurasi deteksi bentrok antar berbagai tipe data.
         </p>
         <div class="code-block mb-3">
 <pre class="mb-0" style="color: #a9b7c6;">
 if ($isOverlapping) {
-    // Bentrok Dosen: Satu dosen di dua tempat
-    if ($g1['lecturer_id'] === $g2['lecturer_id']) {
+    // Sinkronisasi tipe data Database (String) & Memory (Integer)
+    if ($g1['lecturer_id'] != null && $g1['lecturer_id'] == $g2['lecturer_id']) {
         $penalty += 1000000;
     }
-    // Bentrok Ruangan: Satu ruangan untuk dua kelas
-    if ($g1['room_id'] === $g2['room_id']) {
+    if ($g1['room_id'] == $g2['room_id']) {
+        $penalty += 1000000;
+    }
+    // Semester Conflict: Menjamin mahasiswa tidak memiliki jadwal ganda
+    if ($g1['semester'] != null && $g1['semester'] == $g2['semester']) {
         $penalty += 1000000;
     }
 }
 return ($penalty === 0) ? 1.0 : (1 / (1 + $penalty));</pre>
         </div>
         <p class="small text-muted border-start ps-3">
-            <strong>Analisis Kode:</strong> Menggunakan nilai penalti yang sangat besar (1 juta) untuk memastikan jadwal dengan satu bentrok saja sudah dianggap "sangat buruk" oleh sistem. Nilai fitness dihitung dengan rumus inversi: semakin besar penalti, semakin kecil (mendekati 0) nilai fitness-nya.
+            <strong>Analisis Kode:</strong> Sistem menggunakan perbandingan fleksibel (<code>==</code>) untuk mensinkronkan ID dari database yang sering kali bertipe <i>String</i> dengan indeks di memori yang bertipe <i>Integer</i>. Dengan nilai penalti ekstrim (1.000.000), sistem memastikan tidak ada satu pun bentrok yang lolos ke database hasil akhir.
         </p>
     </div>
 
