@@ -157,6 +157,8 @@
     </div>
 </div>
 
+<div id="scheduleNotification" class="mb-4" style="display: none;"></div>
+
 <div id="scheduleResultsContainer">
 <div id="scheduleResults" class="card border shadow-sm rounded-4 overflow-hidden">
     <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
@@ -481,7 +483,7 @@
                     if (data.success) updateResults(data.message); 
                 })
                 .catch(err => { 
-                    Swal.fire({ icon: 'error', title: 'Opps!', text: err.message, confirmButtonColor: '#0d6efd', borderRadius: '1rem' }); 
+                    updateResults(err.message, 'error'); 
                 })
                 .finally(() => { 
                     document.getElementById('loading').style.display = 'none'; 
@@ -522,22 +524,22 @@
                 }
 
                 if (message) {
-                    if (type === 'success') {
-                        // Hitung total baris untuk menentukan delay (0.05s per baris + 0.4s durasi animasi)
-                        const rowCount = document.querySelectorAll('.reveal-row').length;
-                        const totalDelay = (rowCount * 50) + 400; // dalam milidetik
-
-                        setTimeout(() => {
-                            Swal.fire({ 
-                                icon: 'success', 
-                                title: 'Berhasil', 
-                                text: message, 
-                                confirmButtonColor: '#0d6efd', 
-                                borderRadius: '1rem' 
-                            });
-                        }, totalDelay);
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Gagal', text: message, confirmButtonColor: '#0d6efd', borderRadius: '1rem' });
+                    const notification = document.getElementById('scheduleNotification');
+                    if (notification) {
+                        const isSuccess = type === 'success';
+                        notification.innerHTML = `
+                            <div class="alert alert-${isSuccess ? 'success' : 'danger'} border-0 shadow-sm rounded-4 p-3 d-flex align-items-center animate__animated animate__fadeIn">
+                                <div class="icon-circle bg-${isSuccess ? 'success' : 'danger'} text-white me-3" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                    <i class="bi bi-${isSuccess ? 'check-lg' : 'exclamation-triangle-fill'}"></i>
+                                </div>
+                                <div class="fw-bold text-${isSuccess ? 'success' : 'danger'}">${message}</div>
+                                <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.style.display='none'"></button>
+                            </div>
+                        `;
+                        notification.style.display = 'block';
+                        
+                        // Scroll ke notifikasi
+                        notification.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }
             });
