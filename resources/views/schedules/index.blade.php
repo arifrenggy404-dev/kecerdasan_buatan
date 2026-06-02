@@ -479,7 +479,26 @@
                     document.getElementById('scheduleResultsContainer').innerHTML = container.innerHTML;
                     attachResetListener();
                 }
-                if (message) Swal.fire({ icon: type, title: type === 'success' ? 'Berhasil' : 'Gagal', text: message, confirmButtonColor: '#0d6efd', borderRadius: '1rem' });
+
+                if (message) {
+                    if (type === 'success') {
+                        // Hitung total baris untuk menentukan delay (0.05s per baris + 0.4s durasi animasi)
+                        const rowCount = document.querySelectorAll('.reveal-row').length;
+                        const totalDelay = (rowCount * 50) + 400; // dalam milidetik
+
+                        setTimeout(() => {
+                            Swal.fire({ 
+                                icon: 'success', 
+                                title: 'Berhasil', 
+                                text: message, 
+                                confirmButtonColor: '#0d6efd', 
+                                borderRadius: '1rem' 
+                            });
+                        }, totalDelay);
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Gagal', text: message, confirmButtonColor: '#0d6efd', borderRadius: '1rem' });
+                    }
+                }
             });
     }
 
