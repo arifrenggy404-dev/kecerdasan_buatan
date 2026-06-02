@@ -144,7 +144,7 @@
                     <form action="{{ route('schedules.generate') }}" method="POST" id="generateForm" class="m-0 mx-auto" style="max-width: 450px;">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-lg transition-all hover-translate-y d-flex align-items-center justify-content-center fw-bold py-3">
-                            <i class="bi bi-cpu me-2 fs-4"></i> JALANKAN PENJADWALAN SEKARANG
+                            JALANKAN PENJADWALAN SEKARANG
                         </button>
                     </form>
 
