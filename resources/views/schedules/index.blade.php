@@ -147,6 +147,7 @@
                             <i class="bi bi-cpu me-2 fs-4"></i> JALANKAN PENJADWALAN SEKARANG
                         </button>
                     </form>
+
                     <div class="mt-4 text-muted small">
                         <i class="bi bi-info-circle me-1"></i> Proses ini mungkin memakan waktu beberapa detik. Lihat <a href="{{ route('docs.index') }}" class="text-primary text-decoration-none fw-bold">Dokumentasi</a> untuk panduan lebih lanjut.
                     </div>
@@ -366,7 +367,44 @@
             generateForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const form = this;
+                const logContent = document.getElementById('loadingLog');
+                
+                // Reset log content
+                logContent.innerHTML = '<div><span class="text-secondary">#</span> Initializing Genetic Engine...</div>';
+                
                 document.getElementById('loading').style.display = 'flex';
+
+                const logs = [
+                    "Loading Master Data...",
+                    "Building chromosomes (Pop: 100)...",
+                    "Applying Hard Constraints...",
+                    "Semester & Type Check...",
+                    "Generation 1... Fitness 0.24",
+                    "Crossover & Mutation...",
+                    "Generation 100... Fitness 0.45",
+                    "Generation 500... Fitness 0.78",
+                    "Adaptive Mutation triggered...",
+                    "Generation 1200... Fitness 0.95",
+                    "Convergence reached! 1.0 FOUND.",
+                    "Mapping database IDs...",
+                    "Finalizing schedule records..."
+                ];
+
+                let logIdx = 0;
+                const logInterval = setInterval(() => {
+                    if (logIdx < logs.length) {
+                        const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        const line = document.createElement('div');
+                        line.style.marginBottom = "4px";
+                        line.innerHTML = `<span style="color: #6c757d;">[${time}]</span> <span style="color: #0dcaf0;">></span> ${logs[logIdx]}`;
+                        logContent.appendChild(line);
+                        logContent.scrollTop = logContent.scrollHeight;
+                        logIdx++;
+                    } else {
+                        clearInterval(logInterval);
+                    }
+                }, 350);
+
                 fetch(form.getAttribute('action'), {
                     method: 'POST',
                     body: new FormData(form),

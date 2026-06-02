@@ -83,10 +83,29 @@
             border-radius: 2rem;
             box-shadow: 0 20px 50px rgba(0,0,0,0.1);
             border: 1px solid rgba(0,0,0,0.05);
-            max-width: 400px;
+            max-width: 600px;
             width: 90%;
             text-align: center;
             animation: fadeInScale 0.5s ease-out;
+        }
+
+        .loading-log {
+            background: #0a0a0a;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-top: 2rem;
+            text-align: left;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            color: #00ff00;
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .loading-log div {
+            margin-bottom: 4px;
+            line-height: 1.4;
         }
 
         @keyframes fadeInScale {
@@ -126,6 +145,9 @@
                     <div class="progress" style="height: 6px; border-radius: 10px; background-color: #f0f2f5;">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
                     </div>
+                </div>
+                <div id="loadingLog" class="loading-log">
+                    <div><span class="text-secondary">#</span> Initializing Engine...</div>
                 </div>
             </div>
         </div>
