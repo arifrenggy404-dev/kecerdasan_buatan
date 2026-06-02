@@ -48,6 +48,12 @@
             z-index: 9999;
         }
 
+        /* Custom Modal Backdrop */
+        .modal-backdrop {
+            --bs-backdrop-opacity: 0.1;
+            backdrop-filter: blur(4px);
+        }
+
         .dna-loader {
             display: flex;
             flex-direction: column;
