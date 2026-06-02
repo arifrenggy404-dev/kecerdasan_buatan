@@ -385,6 +385,15 @@
                 // Reset log content
                 logContent.innerHTML = '<div><span class="text-secondary">#</span> Initializing Genetic Engine...</div>';
                 
+                const progressBar = document.getElementById('algorithmProgressBar');
+                const progressPercentage = document.getElementById('progressPercentage');
+                const progressStatus = document.getElementById('progressStatus');
+                
+                // Reset progress UI
+                if (progressBar) progressBar.style.width = '0%';
+                if (progressPercentage) progressPercentage.innerText = '0%';
+                if (progressStatus) progressStatus.innerText = 'Initializing...';
+                
                 document.getElementById('loading').style.display = 'flex';
 
                 const logs = [
@@ -410,12 +419,46 @@
                 let logIdx = 0;
                 const logInterval = setInterval(() => {
                     if (logIdx < logs.length) {
+                        const currentLog = logs[logIdx];
                         const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
                         const line = document.createElement('div');
                         line.style.marginBottom = "4px";
-                        line.innerHTML = `<span style="color: #6c757d;">[${time}]</span> <span style="color: #0dcaf0;">></span> ${logs[logIdx]}`;
+                        line.innerHTML = `<span style="color: #6c757d;">[${time}]</span> <span style="color: #0dcaf0;">></span> ${currentLog}`;
                         logContent.appendChild(line);
                         logContent.scrollTop = logContent.scrollHeight;
+                        
+                        // Update Progress Bar
+                        if (progressBar && progressPercentage && progressStatus) {
+                            let percent = 0;
+                            if (currentLog.includes('Fitness:')) {
+                                const fitnessValue = parseFloat(currentLog.split('Fitness: ')[1]);
+                                percent = Math.round(fitnessValue * 100);
+                                progressStatus.innerText = `Evolusi: ${currentLog.split('...')[0]}`;
+                            } else if (currentLog.includes('OPTIMAL')) {
+                                percent = 100;
+                                progressStatus.innerText = 'Solusi Optimal Ditemukan!';
+                            } else if (currentLog.includes('Finalizing')) {
+                                percent = 100;
+                                progressStatus.innerText = 'Menyimpan Jadwal...';
+                            } else {
+                                // Pre-evolution steps (0-15%)
+                                percent = Math.min(Math.round(((logIdx + 1) / 7) * 15), 15);
+                                progressStatus.innerText = currentLog;
+                            }
+                            
+                            progressBar.style.width = percent + '%';
+                            progressPercentage.innerText = percent + '%';
+                            
+                            // Change color based on progress
+                            if (percent > 80) {
+                                progressBar.classList.remove('bg-primary');
+                                progressBar.classList.add('bg-success');
+                            } else {
+                                progressBar.classList.add('bg-primary');
+                                progressBar.classList.remove('bg-success');
+                            }
+                        }
+
                         logIdx++;
                     } else {
                         clearInterval(logInterval);

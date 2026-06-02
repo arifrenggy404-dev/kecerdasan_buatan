@@ -109,6 +109,10 @@
             animation: fadeInScale 0.5s ease-out;
         }
 
+        .x-small {
+            font-size: 0.75rem;
+        }
+
         .loading-log {
             background: #0a0a0a;
             border-radius: 1rem;
@@ -162,8 +166,12 @@
                 <h4 class="fw-bold text-dark mb-2 pulse-text">Menghitung Evolusi...</h4>
                 <p class="text-muted mb-0 small px-3">Algoritma Genetika sedang mencari kombinasi jadwal terbaik yang bebas bentrok.</p>
                 <div class="mt-4">
-                    <div class="progress" style="height: 6px; border-radius: 10px; background-color: #f0f2f5;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="x-small text-muted fw-bold" id="progressStatus">Progress Evolusi</span>
+                        <span class="x-small text-primary fw-bold" id="progressPercentage">0%</span>
+                    </div>
+                    <div class="progress" style="height: 8px; border-radius: 10px; background-color: #f0f2f5;">
+                        <div id="algorithmProgressBar" class="progress-bar progress-bar-striped progress-bar-animated shadow-sm" role="progressbar" style="width: 0%; transition: width 0.4s ease;"></div>
                     </div>
                 </div>
                 <div id="loadingLog" class="loading-log">
