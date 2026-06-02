@@ -228,7 +228,7 @@ class GeneticAlgorithmService
             $g1 = $genesWithMinutes[$i];
             if (!$g1) continue;
 
-            if ($g1['type'] !== $g1['room_type']) {
+            if ($g1['type'] != $g1['room_type']) {
                 $penalty += 1000000;
             }
 
@@ -236,22 +236,22 @@ class GeneticAlgorithmService
                 $g2 = $genesWithMinutes[$j];
                 if (!$g2) continue;
 
-                if ($g1['day_idx'] === $g2['day_idx']) {
+                if ($g1['day_idx'] == $g2['day_idx']) {
                     $isOverlapping = ($g1['start_min'] < $g2['end_min']) && ($g1['end_min'] > $g2['start_min']);
 
                     if ($isOverlapping) {
-                        // 1. Bentrok Dosen
-                        if ($g1['lecturer_id'] === $g2['lecturer_id']) {
+                        // 1. Bentrok Dosen (Hanya jika dosen sudah diplot)
+                        if ($g1['lecturer_id'] != null && $g1['lecturer_id'] == $g2['lecturer_id']) {
                             $penalty += 1000000;
                         }
 
                         // 2. Bentrok Ruangan
-                        if ($g1['room_id'] === $g2['room_id']) {
+                        if ($g1['room_id'] == $g2['room_id']) {
                             $penalty += 1000000;
                         }
 
-                        // 3. Bentrok Semester (Instruksi Dosen)
-                        if ($g1['semester'] !== null && $g1['semester'] === $g2['semester']) {
+                        // 3. Bentrok Semester (Satu semester tidak boleh di waktu yang sama)
+                        if ($g1['semester'] != null && $g1['semester'] == $g2['semester']) {
                             $penalty += 1000000;
                         }
                     }
