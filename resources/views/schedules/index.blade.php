@@ -181,15 +181,17 @@
             $groupedSchedules = $schedules->groupBy(function($s) {
                 return $s->courseOffering?->course?->semester ?? 'Lainnya';
             })->sortKeys();
+            $globalRowIndex = 0;
         @endphp
 
         @forelse($groupedSchedules as $semester => $semesterSchedules)
-            <h6 class="fw-bold text-primary mb-3 mt-{{ $loop->first ? '0' : '5' }} d-flex align-items-center">
+            <h6 class="fw-bold text-primary mb-3 mt-{{ $loop->first ? '0' : '5' }} d-flex align-items-center reveal-row" style="animation-delay: {{ $globalRowIndex * 0.05 }}s">
                 <span class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center me-2" style="width: 28px; height: 24px; font-size: 0.8rem;">
                     {{ $semester }}
                 </span>
                 Semester {{ $semester }}
             </h6>
+            @php $globalRowIndex++; @endphp
             
             <div class="table-responsive border rounded-3 mb-2 shadow-sm">
                 <table class="table table-hover align-middle mb-0">
@@ -220,7 +222,7 @@
                                 $dayName = $s->day?->name ?? 'Unknown';
                                 $badgeColor = $dayBadgeColors[$dayName] ?? 'dark';
                             @endphp
-                            <tr>
+                            <tr class="reveal-row" style="animation-delay: {{ $globalRowIndex * 0.05 }}s">
                                 <td class="px-4">
                                     <span class="badge bg-{{ $badgeColor }}-subtle text-{{ $badgeColor }} border border-{{ $badgeColor }}-subtle rounded-pill px-3 py-1">
                                         {{ $dayName }}
@@ -252,6 +254,7 @@
                                     <div class="x-small text-muted mt-1" style="font-size: 0.65rem;">{{ $s->room?->building?->name ?? '-' }}</div>
                                 </td>
                             </tr>
+                            @php $globalRowIndex++; @endphp
                         @endforeach
                     </tbody>
                 </table>
@@ -314,6 +317,16 @@
     @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .transition-all { transition: all 0.2s ease; }
     .hover-translate-y:hover { transform: translateY(-2px); }
+
+    /* Staggered Reveal Animation */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .reveal-row {
+        opacity: 0;
+        animation: fadeInUp 0.4s ease forwards;
+    }
 </style>
 @endsection
 
