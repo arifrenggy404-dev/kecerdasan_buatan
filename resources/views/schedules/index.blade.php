@@ -22,7 +22,7 @@
 
 <!-- Simple Integrated Dashboard Navigation & Stats -->
 <div class="row g-4 mb-5">
-    <div class="col-md-6 col-lg-3">
+    <div class="col-3">
         <a href="{{ route('lecturers.index') }}" class="text-decoration-none">
             <div class="card h-100 shadow-sm border rounded-4 dashboard-card-simple">
                 <div class="card-body p-4">
@@ -43,7 +43,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-6 col-lg-3">
+    <div class="col-3">
         <a href="{{ route('buildings.index') }}" class="text-decoration-none">
             <div class="card h-100 shadow-sm border rounded-4 dashboard-card-simple">
                 <div class="card-body p-4">
@@ -64,7 +64,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-6 col-lg-3">
+    <div class="col-3">
         <a href="{{ route('rooms.index') }}" class="text-decoration-none">
             <div class="card h-100 shadow-sm border rounded-4 dashboard-card-simple">
                 <div class="card-body p-4">
@@ -85,7 +85,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-6 col-lg-3">
+    <div class="col-3">
         <a href="{{ route('courses.index') }}" class="text-decoration-none">
             <div class="card h-100 shadow-sm border rounded-4 dashboard-card-simple">
                 <div class="card-body p-4">
@@ -109,28 +109,46 @@
     </div>
 </div>
 
-<div class="row mb-5">
-    <div class="col-md-12">
-        <div class="card border shadow-sm rounded-4 overflow-hidden">
-            <div class="card-body p-0">
-                <div class="row g-0">
-                    <div class="col-12 col-lg-4 p-5 bg-light d-flex flex-column justify-content-center border-bottom border-lg-bottom-0 border-lg-end text-center">
-                        <div class="h3 mb-3 text-muted"><i class="bi bi-gear"></i></div>
-                        <h5 class="fw-bold mb-2">Konfigurasi</h5>
-                        <p class="small text-muted mb-4">Parameter algoritma dan waktu.</p>
-                        <a href="{{ route('settings.index') }}" class="btn btn-outline-dark px-4 rounded-pill transition-all hover-translate-y">Buka Pengaturan</a>
+<!-- Konfigurasi Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 bg-white border-top border-5 border-dark">
+            <div class="card-body p-4 text-center">
+                <div class="mx-auto" style="max-width: 600px;">
+                    <div class="icon-circle bg-light text-dark shadow-sm mx-auto mb-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-gear-fill"></i>
                     </div>
-                    <div class="col-12 col-lg-8 p-5 bg-white d-flex flex-column justify-content-center text-center">
-                        <h4 class="fw-bold mb-3 text-dark">Generasi Jadwal</h4>
-                        <p class="text-muted small mb-4 px-md-5">Pastikan data telah benar sebelum menjalankan sistem.</p>
-                        <div class="d-flex justify-content-center">
-                            <form action="{{ route('schedules.generate') }}" method="POST" id="generateForm" class="w-100" style="max-width: 350px;">
-                                @csrf
-                                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm transition-all hover-translate-y">
-                                    <i class="bi bi-cpu me-2"></i> Jalankan Penjadwalan
-                                </button>
-                            </form>
-                        </div>
+                    <h5 class="fw-bold mb-2">Konfigurasi Sistem</h5>
+                    <p class="text-muted small mb-4">Parameter algoritma, batasan waktu, dan durasi SKS.</p>
+                    <a href="{{ route('settings.index') }}" class="btn btn-outline-dark rounded-pill px-5 shadow-sm transition-all hover-translate-y">
+                        <i class="bi bi-sliders me-2"></i> Buka Pengaturan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generasi Jadwal Card -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border shadow-sm rounded-4 overflow-hidden border-primary-subtle">
+            <div class="card-body p-5 text-center bg-white">
+                <div class="mx-auto" style="max-width: 800px;">
+                    <h3 class="fw-bold mb-3 text-dark">Generasi Jadwal Otomatis</h3>
+                    <p class="text-muted mb-5 px-lg-5">
+                        Pastikan seluruh data master (Dosen, Ruangan, Gedung, dan Mata Kuliah) telah diinput dengan benar. 
+                        Sistem akan menjalankan Algoritma Genetika untuk menghasilkan jadwal yang optimal dan bebas bentrok.
+                    </p>
+                    
+                    <form action="{{ route('schedules.generate') }}" method="POST" id="generateForm" class="m-0 mx-auto" style="max-width: 450px;">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-lg transition-all hover-translate-y d-flex align-items-center justify-content-center fw-bold py-3">
+                            <i class="bi bi-cpu me-2 fs-4"></i> JALANKAN PENJADWALAN SEKARANG
+                        </button>
+                    </form>
+                    <div class="mt-4 text-muted small">
+                        <i class="bi bi-info-circle me-1"></i> Proses ini mungkin memakan waktu beberapa detik.
                     </div>
                 </div>
             </div>
@@ -273,16 +291,16 @@
     .x-small { font-size: 0.8rem; }
     
     .ga-visual-container {
-        height: 120px;
+        height: 180px;
         display: flex;
         justify-content: center;
         align-items: center;
     }
-    .ai-evolution-core { position: relative; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; }
-    .orb-morph { width: 50px; height: 50px; background: linear-gradient(135deg, #0d6efd, #0dcaf0); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; display: flex; justify-content: center; align-items: center; color: white; font-size: 1.5rem; z-index: 2; animation: morphing 8s infinite ease-in-out; }
-    .orb-glow { position: absolute; width: 70px; height: 70px; background: rgba(13, 110, 253, 0.1); border-radius: 50%; filter: blur(15px); animation: pulse-glow 3s infinite ease-in-out; }
-    .orbit-ring { position: absolute; width: 90px; height: 90px; border: 1px solid rgba(13, 110, 253, 0.1); border-radius: 50%; animation: rotate 15s linear infinite; }
-    .satellite { position: absolute; width: 6px; height: 6px; background: #0dcaf0; border-radius: 50%; }
+    .ai-evolution-core { position: relative; width: 140px; height: 140px; display: flex; justify-content: center; align-items: center; }
+    .orb-morph { width: 90px; height: 90px; background: linear-gradient(135deg, #0d6efd, #0dcaf0); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; display: flex; justify-content: center; align-items: center; color: white; font-size: 2.8rem; z-index: 2; animation: morphing 8s infinite ease-in-out; }
+    .orb-glow { position: absolute; width: 120px; height: 120px; background: rgba(13, 110, 253, 0.1); border-radius: 50%; filter: blur(25px); animation: pulse-glow 3s infinite ease-in-out; }
+    .orbit-ring { position: absolute; width: 160px; height: 160px; border: 1px solid rgba(13, 110, 253, 0.1); border-radius: 50%; animation: rotate 15s linear infinite; }
+    .satellite { position: absolute; width: 10px; height: 10px; background: #0dcaf0; border-radius: 50%; }
     .s1 { top: 0; left: 50%; transform: translateX(-50%); }
     .s2 { bottom: 20%; right: 5%; }
     .s3 { bottom: 20%; left: 5%; }

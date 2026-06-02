@@ -121,7 +121,7 @@
     </div>
 
     <main class="py-5">
-        <div class="container-fluid px-md-5">
+        <div class="container-fluid px-4 px-md-5">
             @if(session('success'))
                 <div class="alert alert-success border-0 shadow-sm alert-dismissible fade show rounded-3">
                     <div class="d-flex align-items-center">
