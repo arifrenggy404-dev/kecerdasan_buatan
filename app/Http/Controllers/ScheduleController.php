@@ -158,6 +158,10 @@ class ScheduleController extends Controller
             return redirect()->back()->with('error', 'Tidak ada jadwal untuk diekspor.');
         }
 
+        $groupedSchedules = $schedules->groupBy(function($s) {
+            return $s->courseOffering?->course?->semester ?? 'Lainnya';
+        })->sortKeys();
+
         $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
         
         $rawFilename = $request->query('filename') ?: "jadwal_perkuliahan_" . date('Y-m-d_H-i');
@@ -173,28 +177,35 @@ class ScheduleController extends Controller
 
         $columns = ['Hari', 'Waktu Mulai', 'Waktu Selesai', 'Semester', 'Mata Kuliah', 'SKS', 'Dosen', 'Gedung', 'Ruangan'];
 
-        $callback = function() use ($schedules, $columns, $sksDuration) {
+        $callback = function() use ($groupedSchedules, $columns, $sksDuration) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
-            foreach ($schedules as $s) {
-                $startTimeStr = $s->startTimeSlot?->start_time ?? '00:00';
-                $startTime = \Carbon\Carbon::parse($startTimeStr);
-                $sks = $s->courseOffering?->sks ?? 0;
-                $totalMinutes = $sks * $sksDuration;
-                $endTime = $startTime->copy()->addMinutes($totalMinutes);
+            foreach ($groupedSchedules as $semester => $semesterSchedules) {
+                // Tambahkan baris pemisah semester
+                fputcsv($file, ['', '', '', "--- SEMESTER $semester ---", '', '', '', '', '']);
 
-                fputcsv($file, [
-                    $s->day?->name ?? '-',
-                    $startTime->format('H:i'),
-                    $endTime->format('H:i'),
-                    $s->courseOffering?->course?->semester ?? '-',
-                    $s->courseOffering?->course?->name ?? '-',
-                    $sks,
-                    $s->courseOffering?->lecturer?->name ?? '-',
-                    $s->room?->building?->name ?? '-',
-                    $s->room?->name ?? '-'
-                ]);
+                foreach ($semesterSchedules as $s) {
+                    $startTimeStr = $s->startTimeSlot?->start_time ?? '00:00';
+                    $startTime = \Carbon\Carbon::parse($startTimeStr);
+                    $sks = $s->courseOffering?->sks ?? 0;
+                    $totalMinutes = $sks * $sksDuration;
+                    $endTime = $startTime->copy()->addMinutes($totalMinutes);
+
+                    fputcsv($file, [
+                        $s->day?->name ?? '-',
+                        $startTime->format('H:i'),
+                        $endTime->format('H:i'),
+                        $semester,
+                        $s->courseOffering?->course?->name ?? '-',
+                        $sks,
+                        $s->courseOffering?->lecturer?->name ?? '-',
+                        $s->room?->building?->name ?? '-',
+                        $s->room?->name ?? '-'
+                    ]);
+                }
+                // Baris kosong antar semester
+                fputcsv($file, []);
             }
 
             fclose($file);
@@ -217,12 +228,19 @@ class ScheduleController extends Controller
             return redirect()->back()->with('error', 'Tidak ada jadwal untuk diekspor.');
         }
 
+        $groupedSchedules = $schedules->groupBy(function($s) {
+            return $s->courseOffering?->course?->semester ?? 'Lainnya';
+        })->sortKeys();
+
         $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
         
         $rawFilename = $request->query('filename') ?: "jadwal_perkuliahan_" . date('Y-m-d_H-i');
         $filename = Str::slug($rawFilename) . ".pdf";
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('schedules.pdf', compact('schedules', 'sksDuration'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('schedules.pdf', [
+            'groupedSchedules' => $groupedSchedules,
+            'sksDuration' => $sksDuration
+        ]);
         return $pdf->download($filename);
     }
 }
