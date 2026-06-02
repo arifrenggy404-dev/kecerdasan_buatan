@@ -17,6 +17,7 @@ class StoreCourseRequest extends FormRequest
             'code' => 'nullable|string|max:50',
             'sks' => 'required|integer|min:1|max:6',
             'type' => 'required|in:theory,lab',
+            'semester' => 'nullable|integer|min:1|max:8',
             'lecturer_id' => ($isUpdate ? 'sometimes|' : 'required|') . 'exists:lecturers,id',
             'room_id' => 'nullable|exists:rooms,id',
         ];

@@ -171,7 +171,7 @@ class ScheduleController extends Controller
             "Expires"             => "0"
         ];
 
-        $columns = ['Hari', 'Waktu Mulai', 'Waktu Selesai', 'Mata Kuliah', 'SKS', 'Dosen', 'Gedung', 'Ruangan'];
+        $columns = ['Hari', 'Waktu Mulai', 'Waktu Selesai', 'Semester', 'Mata Kuliah', 'SKS', 'Dosen', 'Gedung', 'Ruangan'];
 
         $callback = function() use ($schedules, $columns, $sksDuration) {
             $file = fopen('php://output', 'w');
@@ -188,6 +188,7 @@ class ScheduleController extends Controller
                     $s->day?->name ?? '-',
                     $startTime->format('H:i'),
                     $endTime->format('H:i'),
+                    $s->courseOffering?->course?->semester ?? '-',
                     $s->courseOffering?->course?->name ?? '-',
                     $sks,
                     $s->courseOffering?->lecturer?->name ?? '-',

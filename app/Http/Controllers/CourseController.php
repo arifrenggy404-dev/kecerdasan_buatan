@@ -38,6 +38,7 @@ class CourseController extends Controller
                     'code' => $request->code,
                     'sks' => $request->sks,
                     'type' => $request->type,
+                    'semester' => $request->semester,
                 ]);
                 $courseId = $course->id;
             }
@@ -61,6 +62,7 @@ class CourseController extends Controller
             'code' => $request->code,
             'sks' => $request->sks,
             'type' => $request->type,
+            'semester' => $request->semester,
         ]);
         return redirect()->back()->with('success', 'Mata Kuliah berhasil diperbarui.');
     }

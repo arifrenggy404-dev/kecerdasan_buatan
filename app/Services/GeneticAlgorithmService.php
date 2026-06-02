@@ -24,7 +24,10 @@ class GeneticAlgorithmService
 
     public function __construct()
     {
-        $this->offerings = CourseOffering::select('id', 'lecturer_id', 'sks', 'type')->get()->toArray();
+        $this->offerings = CourseOffering::join('courses', 'course_offerings.course_id', '=', 'courses.id')
+            ->select('course_offerings.id', 'course_offerings.lecturer_id', 'course_offerings.sks', 'course_offerings.type', 'courses.semester')
+            ->get()
+            ->toArray();
         $this->rooms = Room::select('id', 'name', 'type')->get()->toArray();
         
         $activeDayIds = Setting::getValue('active_days', [1, 2, 3, 4, 5]);
@@ -175,6 +178,7 @@ class GeneticAlgorithmService
                 'offering_id' => $offering['id'],
                 'lecturer_id' => $offering['lecturer_id'],
                 'offering_type' => $offering['type'],
+                'semester'    => $offering['semester'],
                 'room_idx'    => $roomIdx,
                 'day_idx'     => $dayIdx, 
                 'slot_idx'    => $slotIdx,    
@@ -215,6 +219,7 @@ class GeneticAlgorithmService
                 'start_min'   => $startSlotMin['start'],
                 'end_min'     => $endSlotMin['end'],
                 'type'        => $gene['offering_type'],
+                'semester'    => $gene['semester'],
                 'room_type'   => $this->rooms[$gene['room_idx']]['type']
             ];
         }
@@ -235,11 +240,18 @@ class GeneticAlgorithmService
                     $isOverlapping = ($g1['start_min'] < $g2['end_min']) && ($g1['end_min'] > $g2['start_min']);
 
                     if ($isOverlapping) {
+                        // 1. Bentrok Dosen
                         if ($g1['lecturer_id'] === $g2['lecturer_id']) {
                             $penalty += 1000000;
                         }
 
+                        // 2. Bentrok Ruangan
                         if ($g1['room_id'] === $g2['room_id']) {
+                            $penalty += 1000000;
+                        }
+
+                        // 3. Bentrok Semester (Instruksi Dosen)
+                        if ($g1['semester'] !== null && $g1['semester'] === $g2['semester']) {
                             $penalty += 1000000;
                         }
                     }

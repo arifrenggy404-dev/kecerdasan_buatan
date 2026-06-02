@@ -157,82 +157,96 @@
             @endif
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="border-0 px-4 py-3 small text-muted text-uppercase fw-bold">Hari</th>
-                        <th class="border-0 py-3 small text-muted text-uppercase fw-bold">Waktu</th>
-                        <th class="border-0 py-3 small text-muted text-uppercase fw-bold">Mata Kuliah</th>
-                        <th class="border-0 py-3 small text-muted text-uppercase fw-bold">Dosen</th>
-                        <th class="border-0 px-4 py-3 small text-muted text-uppercase fw-bold text-center">Ruangan</th>
-                    </tr>
-                </thead>
-                <tbody class="border-top-0">
-                    @php
-                        $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
-                        $dayBadgeColors = [
-                            'Senin' => 'primary',
-                            'Selasa' => 'success',
-                            'Rabu' => 'warning',
-                            'Kamis' => 'info',
-                            'Jumat' => 'danger',
-                            'Sabtu' => 'indigo',
-                            'Minggu' => 'secondary'
-                        ];
-                    @endphp
-                    @forelse($schedules as $s)
+    <div class="card-body p-4">
+        @php
+            $groupedSchedules = $schedules->groupBy(function($s) {
+                return $s->courseOffering?->course?->semester ?? 'Lainnya';
+            })->sortKeys();
+        @endphp
+
+        @forelse($groupedSchedules as $semester => $semesterSchedules)
+            <h6 class="fw-bold text-primary mb-3 mt-{{ $loop->first ? '0' : '5' }} d-flex align-items-center">
+                <span class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center me-2" style="width: 28px; height: 24px; font-size: 0.8rem;">
+                    {{ $semester }}
+                </span>
+                Semester {{ $semester }}
+            </h6>
+            
+            <div class="table-responsive border rounded-3 mb-2 shadow-sm">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 px-4 py-3 small text-muted text-uppercase fw-bold">Hari</th>
+                            <th class="border-0 py-3 small text-muted text-uppercase fw-bold">Waktu</th>
+                            <th class="border-0 py-3 small text-muted text-uppercase fw-bold">Mata Kuliah</th>
+                            <th class="border-0 py-3 small text-muted text-uppercase fw-bold">Dosen</th>
+                            <th class="border-0 px-4 py-3 small text-muted text-uppercase fw-bold text-center">Ruangan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
                         @php
-                            $dayName = $s->day?->name ?? 'Unknown';
-                            $badgeColor = $dayBadgeColors[$dayName] ?? 'dark';
+                            $sksDuration = \App\Models\Setting::getValue('sks_duration', 50);
+                            $dayBadgeColors = [
+                                'Senin' => 'primary',
+                                'Selasa' => 'success',
+                                'Rabu' => 'warning',
+                                'Kamis' => 'info',
+                                'Jumat' => 'danger',
+                                'Sabtu' => 'indigo',
+                                'Minggu' => 'secondary'
+                            ];
                         @endphp
-                        <tr>
-                            <td class="px-4">
-                                <span class="badge bg-{{ $badgeColor }}-subtle text-{{ $badgeColor }} border border-{{ $badgeColor }}-subtle rounded-pill px-3 py-1">
-                                    {{ $dayName }}
-                                </span>
-                            </td>
-                            <td>
-                                @php
-                                    $startTimeStr = $s->startTimeSlot?->start_time ?? '00:00';
-                                    $startTime = \Carbon\Carbon::parse($startTimeStr);
-                                    $sks = $s->courseOffering?->sks ?? 0;
-                                    $totalMinutes = $sks * $sksDuration;
-                                    $endTime = $startTime->copy()->addMinutes($totalMinutes);
-                                @endphp
-                                <span class="small text-dark fw-medium">
-                                    {{ $startTime->format('H:i') }} - {{ $endTime->format('H:i') }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="fw-bold small">{{ $s->courseOffering?->course?->name ?? '-' }}</div>
-                                <div class="x-small text-muted" style="font-size: 0.75rem;">{{ $s->courseOffering?->course?->sks ?? 0 }} SKS</div>
-                            </td>
-                            <td>
-                                <div class="small">{{ $s->courseOffering?->lecturer?->name ?? '-' }}</div>
-                            </td>
-                            <td class="px-4 text-center">
-                                <div class="badge bg-light text-dark border px-3 py-1 fw-medium">
-                                    {{ $s->room?->name ?? '?' }}
-                                </div>
-                                <div class="x-small text-muted mt-1" style="font-size: 0.65rem;">{{ $s->room?->building?->name ?? '-' }}</div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-5">
-                                <div class="text-muted opacity-50">
-                                    <div class="h2 mb-3"><i class="bi bi-calendar-x"></i></div>
-                                    <p class="small mb-0">Klik tombol "Jalankan Penjadwalan" di atas.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                        @foreach($semesterSchedules as $s)
+                            @php
+                                $dayName = $s->day?->name ?? 'Unknown';
+                                $badgeColor = $dayBadgeColors[$dayName] ?? 'dark';
+                            @endphp
+                            <tr>
+                                <td class="px-4">
+                                    <span class="badge bg-{{ $badgeColor }}-subtle text-{{ $badgeColor }} border border-{{ $badgeColor }}-subtle rounded-pill px-3 py-1">
+                                        {{ $dayName }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @php
+                                        $startTimeStr = $s->startTimeSlot?->start_time ?? '00:00';
+                                        $startTime = \Carbon\Carbon::parse($startTimeStr);
+                                        $sks = $s->courseOffering?->sks ?? 0;
+                                        $totalMinutes = $sks * $sksDuration;
+                                        $endTime = $startTime->copy()->addMinutes($totalMinutes);
+                                    @endphp
+                                    <span class="small text-dark fw-medium">
+                                        {{ $startTime->format('H:i') }} - {{ $endTime->format('H:i') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold small">{{ $s->courseOffering?->course?->name ?? '-' }}</div>
+                                    <div class="x-small text-muted" style="font-size: 0.7rem;">{{ $sks }} SKS</div>
+                                </td>
+                                <td>
+                                    <div class="small">{{ $s->courseOffering?->lecturer?->name ?? '-' }}</div>
+                                </td>
+                                <td class="px-4 text-center">
+                                    <div class="badge bg-light text-dark border px-3 py-1 fw-medium" style="font-size: 0.75rem;">
+                                        {{ $s->room?->name ?? '?' }}
+                                    </div>
+                                    <div class="x-small text-muted mt-1" style="font-size: 0.65rem;">{{ $s->room?->building?->name ?? '-' }}</div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @empty
+            <div class="text-center py-5">
+                <div class="text-muted opacity-50">
+                    <div class="h2 mb-3"><i class="bi bi-calendar-x"></i></div>
+                    <p class="small mb-0">Klik tombol "Jalankan Penjadwalan" di atas.</p>
+                </div>
+            </div>
+        @endforelse
     </div>
+</div>
 </div>
 </div>
 

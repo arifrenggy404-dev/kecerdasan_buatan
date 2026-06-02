@@ -22,6 +22,7 @@
             <tr>
                 <th>Hari</th>
                 <th>Waktu</th>
+                <th>Sem</th>
                 <th>Mata Kuliah</th>
                 <th>Dosen</th>
                 <th>Lokasi</th>
@@ -39,6 +40,7 @@
                 <tr>
                     <td>{{ $s->day?->name }}</td>
                     <td>{{ $startTime->format('H:i') }} - {{ $endTime->format('H:i') }}</td>
+                    <td>{{ $s->courseOffering?->course?->semester ?? '-' }}</td>
                     <td>
                         <strong>{{ $s->courseOffering?->course?->name }}</strong><br>
                         <small>{{ $sks }} SKS</small>

@@ -39,9 +39,10 @@ Sebelum algoritma berjalan, sistem menyiapkan lingkungan berdasarkan data dari t
 Setiap individu dinilai kualitasnya berdasarkan kepatuhan terhadap batasan (*constraints*). Sistem menggunakan **Hard Constraints** dengan penalti berat (1.000.000 poin) untuk setiap pelanggaran:
 1.  **Bentrok Dosen:** Seorang dosen tidak boleh mengajar di dua kelas berbeda pada waktu yang sama.
 2.  **Bentrok Ruangan:** Satu ruangan tidak boleh digunakan oleh dua kelas berbeda pada waktu yang sama.
-3.  **Kesesuaian Tipe Ruangan:** Mata kuliah praktikum harus di Laboratorium, dan teori di ruang kelas biasa.
-4.  **Pelanggaran Waktu Blackout:** Jadwal tidak boleh menempati rentang waktu terlarang (Blackout) secara keseluruhan maupun sebagian durasi kelas.
-5.  **Slot Overflow:** Durasi mata kuliah (SKS) tidak boleh melebihi batas jam operasional harian.
+3.  **Bentrok Semester:** Dua mata kuliah dalam satu semester yang sama tidak boleh dijadwalkan pada waktu yang sama (menjamin mahasiswa tidak memiliki jadwal ganda).
+4.  **Kesesuaian Tipe Ruangan:** Mata kuliah praktikum harus di Laboratorium, dan teori di ruang kelas biasa.
+5.  **Pelanggaran Waktu Blackout:** Jadwal tidak boleh menempati rentang waktu terlarang (Blackout) secara keseluruhan maupun sebagian durasi kelas.
+6.  **Slot Overflow:** Durasi mata kuliah (SKS) tidak boleh melebihi batas jam operasional harian.
 
 **Rumus Fitness:**  
 `Fitness = 1 / (1 + Total Penalti)`  
