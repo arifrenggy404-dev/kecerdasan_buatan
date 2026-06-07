@@ -6,19 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::table('course_offerings', function (Blueprint $table) {
-            $table->foreignId('room_id')->nullable()->after('lecturer_id')->constrained()->cascadeOnDelete();
-            $table->string('name')->nullable()->change();
+        Schema::table('kelas', function (Blueprint $table) {
+            $table->foreignId('ruangan_id')->nullable()->after('dosen_id')->constrained('ruangan')->nullOnDelete();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::table('course_offerings', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('room_id');
-            $table->string('name')->nullable(false)->change();
+        Schema::table('kelas', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('ruangan_id');
         });
     }
 };

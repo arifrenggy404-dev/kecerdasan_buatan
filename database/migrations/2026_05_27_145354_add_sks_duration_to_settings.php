@@ -9,9 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::table('settings')->insertOrIgnore([
-            'key' => 'sks_duration',
-            'value' => json_encode(50),
+        DB::table('pengaturan')->insertOrIgnore([
+            'kunci' => 'durasi_sks',
+            'nilai' => json_encode(50),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -19,6 +19,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::table('settings')->where('key', 'sks_duration')->delete();
+        DB::table('pengaturan')->where('kunci', 'durasi_sks')->delete();
     }
 };

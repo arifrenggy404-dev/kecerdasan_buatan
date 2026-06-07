@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('rooms', function (Blueprint $table) {
-            $table->foreignId('building_id')->nullable()->after('id')->constrained()->nullOnDelete();
+        Schema::table('ruangan', function (Blueprint $table) {
+            $table->foreignId('gedung_id')->nullable()->after('id')->constrained('gedung')->nullOnDelete();
         });
     }
 
     public function down(): void
     {
-        Schema::table('rooms', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('building_id');
+        Schema::table('ruangan', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('gedung_id');
         });
     }
 };

@@ -150,7 +150,7 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <a href="{{ route('docs.index') }}" class="docs-shortcut shadow-sm" title="Dokumentasi Sistem">
+    <a href="{{ route('dokumentasi.index') }}" class="docs-shortcut shadow-sm" title="Dokumentasi Sistem">
         <i class="bi bi-book fs-4"></i>
     </a>
 

@@ -8,31 +8,31 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('pengaturan', function (Blueprint $table) {
             $table->id();
-            $table->string('key')->unique();
-            $table->json('value')->nullable();
+            $table->string('kunci')->unique();
+            $table->json('nilai')->nullable();
             $table->timestamps();
         });
 
         // Insert default settings
-        DB::table('settings')->insert([
+        DB::table('pengaturan')->insert([
             [
-                'key' => 'active_days',
-                'value' => json_encode([1, 2, 3, 4, 5]), // Senin - Jumat
+                'kunci' => 'hari_aktif',
+                'nilai' => json_encode([1, 2, 3, 4, 5]), // Senin - Jumat
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'key' => 'operational_hours',
-                'value' => json_encode(['start' => '07:30', 'end' => '17:00']),
+                'kunci' => 'jam_operasional',
+                'nilai' => json_encode(['mulai' => '07:30', 'selesai' => '17:00']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'key' => 'blackout_hours',
-                'value' => json_encode([
-                    ['start' => '12:00', 'end' => '13:00'] // Jam Istirahat
+                'kunci' => 'jam_istirahat',
+                'nilai' => json_encode([
+                    ['mulai' => '12:00', 'selesai' => '13:00'] // Jam Istirahat
                 ]),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -42,6 +42,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('pengaturan');
     }
 };

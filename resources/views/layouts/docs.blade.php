@@ -75,34 +75,34 @@
 
         <nav class="nav flex-column">
             <div class="text-uppercase small fw-bold text-muted mb-3 px-3" style="letter-spacing: 1px;">Panduan</div>
-            <a class="nav-link {{ Request::routeIs('docs.index') ? 'active' : '' }}" href="{{ route('docs.index') }}">
+            <a class="nav-link {{ Request::routeIs('dokumentasi.index') ? 'active' : '' }}" href="{{ route('dokumentasi.index') }}">
                 <i class="bi bi-house-door me-2"></i> Pengantar
             </a>
-            <a class="nav-link {{ Request::routeIs('docs.usage') ? 'active' : '' }}" href="{{ route('docs.usage') }}">
+            <a class="nav-link {{ Request::routeIs('dokumentasi.penggunaan') ? 'active' : '' }}" href="{{ route('dokumentasi.penggunaan') }}">
                 <i class="bi bi-book me-2"></i> Cara Penggunaan
             </a>
-            <a class="nav-link {{ Request::routeIs('docs.export') ? 'active' : '' }}" href="{{ route('docs.export') }}">
+            <a class="nav-link {{ Request::routeIs('dokumentasi.ekspor') ? 'active' : '' }}" href="{{ route('dokumentasi.ekspor') }}">
                 <i class="bi bi-file-earmark-arrow-down me-2"></i> Ekspor & Laporan
             </a>
 
             <div class="text-uppercase small fw-bold text-muted mt-4 mb-3 px-3" style="letter-spacing: 1px;">Teknis</div>
-            <a class="nav-link {{ Request::routeIs('docs.architecture') ? 'active' : '' }}" href="{{ route('docs.architecture') }}">
+            <a class="nav-link {{ Request::routeIs('dokumentasi.arsitektur') ? 'active' : '' }}" href="{{ route('dokumentasi.arsitektur') }}">
                 <i class="bi bi-database me-2"></i> Arsitektur Data
             </a>
-            <a class="nav-link {{ Request::routeIs('docs.algorithm') ? 'active' : '' }}" href="{{ route('docs.algorithm') }}">
+            <a class="nav-link {{ Request::routeIs('dokumentasi.algoritma') ? 'active' : '' }}" href="{{ route('dokumentasi.algoritma') }}">
                 <i class="bi bi-diagram-3 me-2"></i> Algoritma Genetika
             </a>
 
             <div class="text-uppercase small fw-bold text-muted mt-4 mb-3 px-3" style="letter-spacing: 1px;">Bantuan</div>
-            <a class="nav-link {{ Request::routeIs('docs.troubleshooting') ? 'active' : '' }}" href="{{ route('docs.troubleshooting') }}">
+            <a class="nav-link {{ Request::routeIs('dokumentasi.troubleshooting') ? 'active' : '' }}" href="{{ route('dokumentasi.troubleshooting') }}">
                 <i class="bi bi-patch-question me-2"></i> Troubleshooting
             </a>
-            <a class="nav-link {{ Request::routeIs('docs.faq') ? 'active' : '' }}" href="{{ route('docs.faq') }}">
+            <a class="nav-link {{ Request::routeIs('dokumentasi.faq') ? 'active' : '' }}" href="{{ route('dokumentasi.faq') }}">
                 <i class="bi bi-chat-dots me-2"></i> FAQ
             </a>
 
             <div class="mt-5 px-3">
-                <a href="{{ route('schedules.index') }}" class="btn btn-primary w-100 rounded-pill shadow-sm">
+                <a href="{{ route('jadwal.index') }}" class="btn btn-primary w-100 rounded-pill shadow-sm">
                     <i class="bi bi-arrow-left me-2"></i> Kembali
                 </a>
             </div>

@@ -8,19 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('course_offerings', function (Blueprint $table) {
-            $table->integer('sks')->nullable()->after('room_id');
-            $table->enum('type', ['theory', 'lab'])->nullable()->after('sks');
+        Schema::table('kelas', function (Blueprint $table) {
+            $table->integer('sks')->nullable()->after('ruangan_id');
+            $table->enum('tipe', ['teori', 'praktikum'])->nullable()->after('sks');
         });
         
-        // Data migration: copy existing sks/type from courses to offerings if any
-        DB::statement('UPDATE course_offerings co JOIN courses c ON co.course_id = c.id SET co.sks = c.sks, co.type = c.type');
+        // Data migration: copy existing sks/tipe from mata_kuliah to kelas if any
+        DB::statement('UPDATE kelas k JOIN mata_kuliah mk ON k.mata_kuliah_id = mk.id SET k.sks = mk.sks, k.tipe = mk.tipe');
     }
 
     public function down(): void
     {
-        Schema::table('course_offerings', function (Blueprint $table) {
-            $table->dropColumn(['sks', 'type']);
+        Schema::table('kelas', function (Blueprint $table) {
+            $table->dropColumn(['sks', 'tipe']);
         });
     }
 };

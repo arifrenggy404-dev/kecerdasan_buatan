@@ -11,60 +11,60 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('lecturers', function (Blueprint $table) {
+        Schema::create('dosen', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('nama');
             $table->string('nip')->unique()->nullable();
             $table->string('email')->unique()->nullable();
             $table->timestamps();
         });
 
-        Schema::create('rooms', function (Blueprint $table) {
+        Schema::create('ruangan', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->enum('type', ['theory', 'lab']);
-            $table->integer('capacity')->default(0);
+            $table->string('nama');
+            $table->enum('tipe', ['teori', 'praktikum']);
+            $table->integer('kapasitas')->default(0);
             $table->timestamps();
         });
 
-        Schema::create('courses', function (Blueprint $table) {
+        Schema::create('mata_kuliah', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('code')->unique();
+            $table->string('nama');
+            $table->string('kode')->unique();
             $table->integer('sks');
-            $table->enum('type', ['theory', 'lab']);
+            $table->enum('tipe', ['teori', 'praktikum']);
             $table->timestamps();
         });
 
-        Schema::create('days', function (Blueprint $table) {
+        Schema::create('hari', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Senin, Selasa, etc.
+            $table->string('nama'); // Senin, Selasa, etc.
             $table->timestamps();
         });
 
-        Schema::create('time_slots', function (Blueprint $table) {
+        Schema::create('slot_waktu', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Slot 1, Slot 2, etc.
-            $table->time('start_time');
-            $table->time('end_time');
+            $table->string('nama'); // Slot 1, Slot 2, etc.
+            $table->time('jam_mulai');
+            $table->time('jam_selesai');
             $table->timestamps();
         });
 
-        Schema::create('course_offerings', function (Blueprint $table) {
+        Schema::create('kelas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('lecturer_id')->constrained()->cascadeOnDelete();
-            $table->string('name'); // e.g., "Kelas A"
+            $table->foreignId('mata_kuliah_id')->constrained('mata_kuliah')->cascadeOnDelete();
+            $table->foreignId('dosen_id')->constrained('dosen')->cascadeOnDelete();
+            $table->string('nama'); // e.g., "Kelas A"
             $table->timestamps();
         });
 
-        Schema::create('schedules', function (Blueprint $table) {
+        Schema::create('jadwal', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('course_offering_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('room_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('day_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('start_time_slot_id')->constrained('time_slots')->cascadeOnDelete();
-            $table->string('batch_id')->index(); // To identify a GA run
+            $table->foreignId('kelas_id')->constrained('kelas')->cascadeOnDelete();
+            $table->foreignId('ruangan_id')->constrained('ruangan')->cascadeOnDelete();
+            $table->foreignId('hari_id')->constrained('hari')->cascadeOnDelete();
+            $table->foreignId('slot_waktu_mulai_id')->constrained('slot_waktu')->cascadeOnDelete();
+            $table->string('id_batch')->index(); // To identify a GA run
             $table->timestamps();
         });
     }
@@ -74,12 +74,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('schedules');
-        Schema::dropIfExists('course_offerings');
-        Schema::dropIfExists('time_slots');
-        Schema::dropIfExists('days');
-        Schema::dropIfExists('courses');
-        Schema::dropIfExists('rooms');
-        Schema::dropIfExists('lecturers');
+        Schema::dropIfExists('jadwal');
+        Schema::dropIfExists('kelas');
+        Schema::dropIfExists('slot_waktu');
+        Schema::dropIfExists('hari');
+        Schema::dropIfExists('mata_kuliah');
+        Schema::dropIfExists('ruangan');
+        Schema::dropIfExists('dosen');
     }
 };

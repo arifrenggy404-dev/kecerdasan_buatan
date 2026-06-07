@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Day;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,8 +12,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            DaySeeder::class,
-            UniversitySeeder::class,
+            HariSeeder::class,
+            UniversitasSeeder::class,
         ]);
     }
 }

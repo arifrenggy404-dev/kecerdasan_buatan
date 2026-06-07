@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('courses', function (Blueprint $table) {
-            $table->dropUnique(['code']);
+        Schema::table('mata_kuliah', function (Blueprint $table) {
+            $table->dropUnique(['kode']);
         });
     }
 
     public function down(): void
     {
-        Schema::table('courses', function (Blueprint $table) {
-            $table->unique('code');
+        Schema::table('mata_kuliah', function (Blueprint $table) {
+            $table->unique('kode');
         });
     }
 };

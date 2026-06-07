@@ -1,37 +1,38 @@
 <?php
 
-use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\DocumentationController;
-use App\Http\Controllers\LecturerController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\CourseController;
-use App\Http\Controllers\BuildingController;
-use App\Http\Controllers\SettingController;
+use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\DokumentasiController;
+use App\Http\Controllers\DosenController;
+use App\Http\Controllers\RuanganController;
+use App\Http\Controllers\MataKuliahController;
+use App\Http\Controllers\GedungController;
+use App\Http\Controllers\PengaturanController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
-Route::post('/generate', [ScheduleController::class, 'generate'])->name('schedules.generate');
-Route::delete('/schedules/clear', [ScheduleController::class, 'destroyAll'])->name('schedules.clear');
-Route::get('/schedules/export/csv', [ScheduleController::class, 'exportCSV'])->name('schedules.export.csv');
-Route::get('/schedules/export/pdf', [ScheduleController::class, 'exportPDF'])->name('schedules.export.pdf');
+Route::get('/', [JadwalController::class, 'index'])->name('jadwal.index');
+Route::post('/buat', [JadwalController::class, 'buat'])->name('jadwal.buat');
+Route::delete('/jadwal/bersihkan', [JadwalController::class, 'hapusSemua'])->name('jadwal.bersihkan');
+Route::get('/jadwal/ekspor/csv', [JadwalController::class, 'eksporCsv'])->name('jadwal.ekspor.csv');
+Route::get('/jadwal/ekspor/pdf', [JadwalController::class, 'eksporPdf'])->name('jadwal.ekspor.pdf');
 
-// Documentation Routes
-Route::prefix('docs')->group(function () {
-    Route::get('/', [DocumentationController::class, 'index'])->name('docs.index');
-    Route::get('/usage', [DocumentationController::class, 'usage'])->name('docs.usage');
-    Route::get('/algorithm', [DocumentationController::class, 'algorithm'])->name('docs.algorithm');
-    Route::get('/architecture', [DocumentationController::class, 'architecture'])->name('docs.architecture');
-    Route::get('/troubleshooting', [DocumentationController::class, 'troubleshooting'])->name('docs.troubleshooting');
-    Route::get('/export', [DocumentationController::class, 'export'])->name('docs.export');
-    Route::get('/faq', [DocumentationController::class, 'faq'])->name('docs.faq');
+// Rute Dokumentasi
+Route::prefix('dokumentasi')->group(function () {
+    Route::get('/', [DokumentasiController::class, 'index'])->name('dokumentasi.index');
+    Route::get('/penggunaan', [DokumentasiController::class, 'penggunaan'])->name('dokumentasi.penggunaan');
+    Route::get('/algoritma', [DokumentasiController::class, 'algoritma'])->name('dokumentasi.algoritma');
+    Route::get('/arsitektur', [DokumentasiController::class, 'arsitektur'])->name('dokumentasi.arsitektur');
+    Route::get('/troubleshooting', [DokumentasiController::class, 'pemecahanMasalah'])->name('dokumentasi.troubleshooting');
+    Route::get('/ekspor', [DokumentasiController::class, 'ekspor'])->name('dokumentasi.ekspor');
+    Route::get('/faq', [DokumentasiController::class, 'faq'])->name('dokumentasi.faq');
 });
 
-Route::resource('lecturers', LecturerController::class)->only(['index', 'store', 'update', 'destroy']);
-Route::resource('buildings', BuildingController::class)->only(['index', 'store', 'update', 'destroy']);
-Route::resource('rooms', RoomController::class)->only(['index', 'store', 'update', 'destroy']);
-Route::resource('courses', CourseController::class)->only(['index', 'store', 'update', 'destroy']);
-Route::put('course-offerings/{offering}', [CourseController::class, 'updateOffering'])->name('course-offerings.update');
-Route::delete('course-offerings/{offering}', [CourseController::class, 'destroyOffering'])->name('course-offerings.destroy');
+Route::resource('dosen', DosenController::class)->only(['index', 'store', 'update', 'destroy'])->names('dosen');
+Route::resource('gedung', GedungController::class)->only(['index', 'store', 'update', 'destroy'])->names('gedung');
+Route::resource('ruangan', RuanganController::class)->only(['index', 'store', 'update', 'destroy'])->names('ruangan');
+Route::resource('mata-kuliah', MataKuliahController::class)->only(['index', 'store', 'update', 'destroy'])->names('mata-kuliah');
 
-Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+Route::put('kelas/{kelas}', [MataKuliahController::class, 'updateOffering'])->name('kelas.update');
+Route::delete('kelas/{kelas}', [MataKuliahController::class, 'destroyOffering'])->name('kelas.destroy');
+
+Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
+Route::put('/pengaturan', [PengaturanController::class, 'update'])->name('pengaturan.update');

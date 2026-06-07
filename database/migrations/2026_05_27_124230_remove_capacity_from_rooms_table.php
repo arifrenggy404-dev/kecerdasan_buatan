@@ -6,17 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::table('rooms', function (Blueprint $table) {
-            $table->dropColumn('capacity');
+        Schema::table('ruangan', function (Blueprint $table) {
+            $table->dropColumn('kapasitas');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::table('rooms', function (Blueprint $table) {
-            $table->integer('capacity')->default(0);
+        Schema::table('ruangan', function (Blueprint $table) {
+            $table->integer('kapasitas')->default(0);
         });
     }
 };

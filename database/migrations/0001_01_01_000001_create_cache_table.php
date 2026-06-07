@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cache', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->mediumText('value');
-            $table->bigInteger('expiration')->index();
+        Schema::create('tembolok', function (Blueprint $table) {
+            $table->string('kunci')->primary();
+            $table->mediumText('nilai');
+            $table->bigInteger('kadaluarsa')->index();
         });
 
-        Schema::create('cache_locks', function (Blueprint $table) {
-            $table->string('key')->primary();
+        Schema::create('kunci_tembolok', function (Blueprint $table) {
+            $table->string('kunci')->primary();
             $table->string('owner');
-            $table->bigInteger('expiration')->index();
+            $table->bigInteger('kadaluarsa')->index();
         });
     }
 
@@ -29,7 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cache');
-        Schema::dropIfExists('cache_locks');
+        Schema::dropIfExists('tembolok');
+        Schema::dropIfExists('kunci_tembolok');
     }
 };
